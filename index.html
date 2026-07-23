@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カメラ・ルシダ アプリ - Step 6 (PWA対応)</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="カメラルシダ">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #333;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #controls {
+      padding: 10px;
+      background-color: #222;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #444;
+      z-index: 10; /* コントロールを常に手前に */
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #444;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    #video-container {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden; /* ズーム時にはみ出した部分を隠す */
+      position: relative;
+      background-color: #000;
+    }
+    /* 全体をまとめて動かすためのラッパー(入れ物) */
+    #workspace {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      transform-origin: center center;
+    }
+    video {
+      max-width: 100%;
+      max-height: 100%;
+      z-index: 1;
+    }
+    #reference-image {
+      position: absolute;
+      max-width: 100%;
+      max-height: 100%;
+      z-index: 2;
+      opacity: 0.5;
+      display: none;
+      cursor: move;
+      user-select: none;
+      touch-action: none; 
+    }
+    select, button, input[type="file"] {
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 3px;
+    }
+    button:disabled, input[type="range"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .locked-btn {
+      background-color: #d9534f;
+      color: white;
+      font-weight: bold;
+    }
+    #focus-lock-btn {
+      background-color: #5bc0de;
+      color: white;
+      font-weight: bold;
+    }
+    #focus-lock-btn.locked-btn {
+      background-color: #f0ad4e;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="controls">
+    <div class="control-group">
+      <label for="camera-select">カメラ:</label>
+      <select id="camera-select"><option value="">検索中...</option></select>
+    </div>
+    
+    <div class="control-group">
+      <button id="focus-lock-btn" disabled>AFロック(未対応)</button>
+    </div>
+
+    <div class="control-group">
+      <label for="image-input">画像:</label>
+      <input type="file" id="image-input" accept="image/*">
+    </div>
+
+    <div class="control-group">
+      <label>透過:</label>
+      <input type="range" id="opacity-slider" min="0" max="100" value="50">
+    </div>
+
+    <div class="control-group">
+      <label>縮小/拡大:</label>
+      <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
+    </div>
+
+    <div class="control-group">
+      <button id="rotate-btn">90度 左回転</button>
+    </div>
+
+    <div class="control-group">
+      <button id="lock-btn">🔓 画像操作をロック</button>
+    </div>
+  </div>
+
+  <div id="video-container">
+    <div id="workspace">
+      <video id="camera-view" autoplay playsinline></video>
+      <img id="reference-image" alt="お手本画像" draggable="false">
+    </div>
+  </div>
+
+  <script>
+    const videoElement = document.getElementById('camera-view');
+    const cameraSelect = document.getElementById('camera-select');
+    const imageInput = document.getElementById('image-input');
+    const refImage = document.getElementById('reference-image');
+    const workspace = document.getElementById('workspace');
+    const videoContainer = document.getElementById('video-container');
+    
+    const opacitySlider = document.getElementById('opacity-slider');
+    const scaleSlider = document.getElementById('scale-slider');
+    const rotateBtn = document.getElementById('rotate-btn');
+    const lockBtn = document.getElementById('lock-btn');
+    const focusLockBtn = document.getElementById('focus-lock-btn');
+
+    let currentStream = null;
+    let isImageLocked = false;
+    let isFocusLocked = false;
+
+    // --- 1. カメラ処理 ---
+    async function init() {
+      await startCamera(null, true);
+      await getCameras();
+      navigator.mediaDevices.addEventListener('devicechange', getCameras);
+    }
+
+    async function getCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        cameraSelect.innerHTML = ''; 
+        if (videoDevices.length === 0) return cameraSelect.innerHTML = '<option>カメラなし</option>';
+        let externalId = null;
+        videoDevices.forEach((d, i) => {
+          const opt = document.createElement('option');
+          opt.value = d.deviceId;
+          opt.text = d.label || `カメラ ${i + 1}`;
+          cameraSelect.appendChild(opt);
+          if (opt.text.toLowerCase().includes('usb') || opt.text.toLowerCase().includes('external')) externalId = d.deviceId;
+        });
+        if (!externalId && videoDevices.length > 1) externalId = videoDevices[videoDevices.length - 1].deviceId;
+        cameraSelect.value = externalId ? externalId : videoDevices[0].deviceId;
+        if(externalId) await startCamera(externalId);
+      } catch (err) { console.error(err); }
+    }
+
+    async function startCamera(deviceId = null, preferExt = false) {
+      if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+      const constraints = { video: { width: { ideal: 1920 }, height: { ideal: 1080 } } };
+      if (deviceId) constraints.video.deviceId = { exact: deviceId };
+      else if (preferExt) constraints.video.facingMode = { ideal: "environment" };
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = currentStream;
+        checkFocusCapabilities();
+      } catch (err) {
+        if (preferExt) startCamera(null, false);
+      }
+    }
+    cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
+
+    function checkFocusCapabilities() {
+      if (!currentStream) return;
+      const track = currentStream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+      if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
+        focusLockBtn.disabled = false;
+        focusLockBtn.textContent = '🔓 オートフォーカス (AF)';
+        focusLockBtn.classList.remove('locked-btn');
+        isFocusLocked = false;
+      } else {
+        focusLockBtn.disabled = true;
+        focusLockBtn.textContent = 'AFロック (未対応)';
+        focusLockBtn.classList.remove('locked-btn');
+      }
+    }
+
+    focusLockBtn.addEventListener('click', async () => {
+      if (!currentStream) return;
+      const track = currentStream.getVideoTracks()[0];
+      if (track.getCapabilities && track.getCapabilities().focusMode) {
+        try {
+          if (!isFocusLocked) {
+            await track.applyConstraints({ advanced: [{ focusMode: "manual" }] });
+            isFocusLocked = true;
+            focusLockBtn.textContent = '🔒 ピント固定中 (MF)';
+            focusLockBtn.classList.add('locked-btn');
+          } else {
+            await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+            isFocusLocked = false;
+            focusLockBtn.textContent = '🔓 オートフォーカス (AF)';
+            focusLockBtn.classList.remove('locked-btn');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    });
+
+    // --- 2. 画像読み込み・操作パネル ---
+    lockBtn.addEventListener('click', () => {
+      isImageLocked = !isImageLocked;
+      if (isImageLocked) {
+        lockBtn.textContent = '🔒 ロック解除 (ズーム可)';
+        lockBtn.classList.add('locked-btn');
+        opacitySlider.disabled = true;
+        scaleSlider.disabled = true;
+        rotateBtn.disabled = true;
+        refImage.style.cursor = 'default';
+        workspace.style.cursor = 'grab'; // ロック中は画面全体を掴めるカーソルに
+      } else {
+        lockBtn.textContent = '🔓 画像操作をロック';
+        lockBtn.classList.remove('locked-btn');
+        opacitySlider.disabled = false;
+        scaleSlider.disabled = false;
+        rotateBtn.disabled = false;
+        refImage.style.cursor = 'move';
+        workspace.style.cursor = 'default';
+      }
+    });
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          refImage.src = event.target.result;
+          refImage.style.display = 'block';
+          resetImageTransform();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    opacitySlider.addEventListener('input', (e) => {
+      refImage.style.opacity = e.target.value / 100;
+    });
+
+    // --- 3. 画像単体の変形（ロック解除時） ---
+    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0;
+    function updateImageTransform() {
+      refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale})`;
+    }
+    function resetImageTransform() {
+      imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0;
+      scaleSlider.value = 1;
+      updateImageTransform();
+    }
+    scaleSlider.addEventListener('input', (e) => {
+      imgScale = parseFloat(e.target.value);
+      updateImageTransform();
+    });
+    rotateBtn.addEventListener('click', () => {
+      imgRotate -= 90;
+      updateImageTransform();
+    });
+
+    // --- 4. ドラッグと全体ズームの統合ロジック ---
+    let isDraggingImage = false; // 画像単体の移動
+    let isDraggingGlobal = false; // 全体の移動（パン）
+
+    // マウス始点用
+    let startMouseX = 0, startMouseY = 0;
+    let startImgPosX = 0, startImgPosY = 0;
+    
+    // 全体ズーム・移動用の変数
+    let globalScale = 1;
+    let globalX = 0, globalY = 0;
+    let startGlobalX = 0, startGlobalY = 0;
+
+    function updateGlobalTransform() {
+      workspace.style.transform = `translate(${globalX}px, ${globalY}px) scale(${globalScale})`;
+    }
+
+    // 全体ズームをリセット（ダブルクリック時）
+    function resetGlobalZoom() {
+      globalScale = 1;
+      globalX = 0;
+      globalY = 0;
+      updateGlobalTransform();
+    }
+
+    // [PC] マウスホイールで全体ズーム（ロック時のみ）
+    videoContainer.addEventListener('wheel', (e) => {
+      if (!isImageLocked) return;
+      e.preventDefault();
+      const zoomSpeed = 0.1;
+      if (e.deltaY < 0) {
+        globalScale += zoomSpeed; // 拡大
+      } else {
+        globalScale -= zoomSpeed; // 縮小
+      }
+      globalScale = Math.max(1, Math.min(globalScale, 5)); // 1倍〜5倍の範囲に制限
+      if (globalScale === 1) {
+        globalX = 0; globalY = 0; // 1倍に戻ったら位置もリセット
+      }
+      updateGlobalTransform();
+    }, { passive: false });
+
+    // [PC] ダブルクリックでリセット（ロック時のみ）
+    videoContainer.addEventListener('dblclick', () => {
+      if (isImageLocked) resetGlobalZoom();
+    });
+
+    // --- マウス・タッチ操作のハンドリング ---
+
+    // 画像に対するマウスダウン（ロック解除時のみ反応）
+    refImage.addEventListener('mousedown', (e) => {
+      if (isImageLocked) return;
+      isDraggingImage = true;
+      startMouseX = e.clientX; startMouseY = e.clientY;
+      startImgPosX = imgPosX; startImgPosY = imgPosY;
+      e.preventDefault(); 
+      e.stopPropagation(); // 背景へのクリックを防止
+    });
+
+    // ワークスペースに対するマウスダウン（ロック時のみ反応）
+    workspace.addEventListener('mousedown', (e) => {
+      if (!isImageLocked) return;
+      isDraggingGlobal = true;
+      startMouseX = e.clientX; startMouseY = e.clientY;
+      startGlobalX = globalX; startGlobalY = globalY;
+      workspace.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDraggingImage) {
+        imgPosX = startImgPosX + (e.clientX - startMouseX);
+        imgPosY = startImgPosY + (e.clientY - startMouseY);
+        updateImageTransform();
+      } else if (isDraggingGlobal) {
+        globalX = startGlobalX + (e.clientX - startMouseX);
+        globalY = startGlobalY + (e.clientY - startMouseY);
+        updateGlobalTransform();
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDraggingImage = false;
+      isDraggingGlobal = false;
+      if (isImageLocked) workspace.style.cursor = 'grab';
+    });
+
+    // --- タッチ対応 (スマホ/タブレット向け) ---
+    let initialPinchDistance = null;
+    let initialGlobalScale = 1;
+
+    workspace.addEventListener('touchstart', (e) => {
+      if (!isImageLocked) {
+        // ロック解除時：画像をタップしたかチェック
+        if (e.target === refImage) {
+          isDraggingImage = true;
+          startMouseX = e.touches[0].clientX; startMouseY = e.touches[0].clientY;
+          startImgPosX = imgPosX; startImgPosY = imgPosY;
+        }
+      } else {
+        // ロック時：全体操作
+        if (e.touches.length === 2) {
+          // 2本指（ピンチズーム）
+          initialPinchDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          initialGlobalScale = globalScale;
+        } else if (e.touches.length === 1) {
+          // 1本指（パン移動）
+          isDraggingGlobal = true;
+          startMouseX = e.touches[0].clientX; startMouseY = e.touches[0].clientY;
+          startGlobalX = globalX; startGlobalY = globalY;
+        }
+      }
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      if (isDraggingImage) {
+        imgPosX = startImgPosX + (e.touches[0].clientX - startMouseX);
+        imgPosY = startImgPosY + (e.touches[0].clientY - startMouseY);
+        e.preventDefault(); 
+      } else if (isImageLocked) {
+        if (e.touches.length === 2 && initialPinchDistance) {
+          const currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const scaleChange = currentDistance / initialPinchDistance;
+          globalScale = initialGlobalScale * scaleChange;
+          globalScale = Math.max(1, Math.min(globalScale, 5));
+          updateGlobalTransform();
+          e.preventDefault();
+        } else if (e.touches.length === 1 && isDraggingGlobal) {
+          globalX = startGlobalX + (e.touches[0].clientX - startMouseX);
+          globalY = startGlobalY + (e.touches[0].clientY - startMouseY);
+          updateGlobalTransform();
+          e.preventDefault();
+        }
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+      isDraggingImage = false;
+      isDraggingGlobal = false;
+      initialPinchDistance = null;
+    });
+
+    init();
+  </script>
+</body>
+</html>
