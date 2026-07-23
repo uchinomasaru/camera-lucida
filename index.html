@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - Step 6 (PWA対応)</title>
+  <title>カメラ・ルシダ アプリ - 修正版</title>
 
+  <!-- iOS（iPhone）用 フルスクリーン（PWA）表示設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="カメラルシダ">
@@ -19,6 +20,7 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
+      overflow: hidden; /* 画面全体の余計なスクロールを防止 */
     }
     #controls {
       padding: 10px;
@@ -28,7 +30,7 @@
       align-items: center;
       flex-wrap: wrap;
       border-bottom: 1px solid #444;
-      z-index: 10; /* コントロールを常に手前に */
+      z-index: 10; 
     }
     .control-group {
       display: flex;
@@ -43,11 +45,11 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden; /* ズーム時にはみ出した部分を隠す */
+      overflow: hidden; 
       position: relative;
       background-color: #000;
+      touch-action: none; /* ★重要: ブラウザのスワイプ戻るやスクロールを完全に無効化 */
     }
-    /* 全体をまとめて動かすためのラッパー(入れ物) */
     #workspace {
       width: 100%;
       height: 100%;
@@ -72,6 +74,7 @@
       cursor: move;
       user-select: none;
       touch-action: none; 
+      pointer-events: auto; /* ★追加: ドラッグ判定を確実にする */
     }
     select, button, input[type="file"] {
       padding: 6px 10px;
@@ -101,6 +104,7 @@
 </head>
 <body>
 
+  <!-- 操作パネル -->
   <div id="controls">
     <div class="control-group">
       <label for="camera-select">カメラ:</label>
@@ -250,7 +254,7 @@
         scaleSlider.disabled = true;
         rotateBtn.disabled = true;
         refImage.style.cursor = 'default';
-        workspace.style.cursor = 'grab'; // ロック中は画面全体を掴めるカーソルに
+        workspace.style.cursor = 'grab'; 
       } else {
         lockBtn.textContent = '🔓 画像操作をロック';
         lockBtn.classList.remove('locked-btn');
@@ -279,7 +283,7 @@
       refImage.style.opacity = e.target.value / 100;
     });
 
-    // --- 3. 画像単体の変形（ロック解除時） ---
+    // --- 3. 画像単体の変形 ---
     let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0;
     function updateImageTransform() {
       refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale})`;
@@ -298,153 +302,150 @@
       updateImageTransform();
     });
 
-    // --- 4. ドラッグと全体ズームの統合ロジック ---
-    let isDraggingImage = false; // 画像単体の移動
-    let isDraggingGlobal = false; // 全体の移動（パン）
+    // --- 4. マウス＆タッチのドラッグ・ズーム処理 (★改善箇所) ---
+    let isDraggingImage = false;
+    let isDraggingGlobal = false;
 
-    // マウス始点用
     let startMouseX = 0, startMouseY = 0;
     let startImgPosX = 0, startImgPosY = 0;
     
-    // 全体ズーム・移動用の変数
     let globalScale = 1;
     let globalX = 0, globalY = 0;
     let startGlobalX = 0, startGlobalY = 0;
+    let initialPinchDistance = null;
+    let initialGlobalScale = 1;
 
     function updateGlobalTransform() {
       workspace.style.transform = `translate(${globalX}px, ${globalY}px) scale(${globalScale})`;
     }
-
-    // 全体ズームをリセット（ダブルクリック時）
     function resetGlobalZoom() {
-      globalScale = 1;
-      globalX = 0;
-      globalY = 0;
+      globalScale = 1; globalX = 0; globalY = 0;
       updateGlobalTransform();
     }
 
-    // [PC] マウスホイールで全体ズーム（ロック時のみ）
+    // 全体ズームリセット（ダブルクリック）
+    videoContainer.addEventListener('dblclick', () => {
+      if (isImageLocked) resetGlobalZoom();
+    });
     videoContainer.addEventListener('wheel', (e) => {
       if (!isImageLocked) return;
       e.preventDefault();
       const zoomSpeed = 0.1;
-      if (e.deltaY < 0) {
-        globalScale += zoomSpeed; // 拡大
-      } else {
-        globalScale -= zoomSpeed; // 縮小
-      }
-      globalScale = Math.max(1, Math.min(globalScale, 5)); // 1倍〜5倍の範囲に制限
-      if (globalScale === 1) {
-        globalX = 0; globalY = 0; // 1倍に戻ったら位置もリセット
-      }
+      if (e.deltaY < 0) globalScale += zoomSpeed;
+      else globalScale -= zoomSpeed;
+      globalScale = Math.max(1, Math.min(globalScale, 5));
+      if (globalScale === 1) { globalX = 0; globalY = 0; }
       updateGlobalTransform();
     }, { passive: false });
 
-    // [PC] ダブルクリックでリセット（ロック時のみ）
-    videoContainer.addEventListener('dblclick', () => {
-      if (isImageLocked) resetGlobalZoom();
-    });
 
-    // --- マウス・タッチ操作のハンドリング ---
-
-    // 画像に対するマウスダウン（ロック解除時のみ反応）
-    refImage.addEventListener('mousedown', (e) => {
+    // --- 【画像単体】のドラッグ開始イベント ---
+    function startImageDrag(clientX, clientY) {
       if (isImageLocked) return;
       isDraggingImage = true;
-      startMouseX = e.clientX; startMouseY = e.clientY;
-      startImgPosX = imgPosX; startImgPosY = imgPosY;
-      e.preventDefault(); 
-      e.stopPropagation(); // 背景へのクリックを防止
+      startMouseX = clientX;
+      startMouseY = clientY;
+      startImgPosX = imgPosX;
+      startImgPosY = imgPosY;
+    }
+
+    refImage.addEventListener('mousedown', (e) => {
+      startImageDrag(e.clientX, e.clientY);
+      e.preventDefault();
+      e.stopPropagation(); // 背景へのクリックをブロック
     });
 
-    // ワークスペースに対するマウスダウン（ロック時のみ反応）
-    workspace.addEventListener('mousedown', (e) => {
+    refImage.addEventListener('touchstart', (e) => {
+      if (isImageLocked) return;
+      if (e.touches.length === 1) { // 1本指の時だけ画像ドラッグ
+        startImageDrag(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, { passive: false });
+
+
+    // --- 【全体（背景）】のドラッグ・ズーム開始イベント ---
+    function startGlobalDrag(clientX, clientY) {
       if (!isImageLocked) return;
       isDraggingGlobal = true;
-      startMouseX = e.clientX; startMouseY = e.clientY;
-      startGlobalX = globalX; startGlobalY = globalY;
+      startMouseX = clientX;
+      startMouseY = clientY;
+      startGlobalX = globalX;
+      startGlobalY = globalY;
       workspace.style.cursor = 'grabbing';
+    }
+
+    workspace.addEventListener('mousedown', (e) => {
+      startGlobalDrag(e.clientX, e.clientY);
       e.preventDefault();
     });
 
-    document.addEventListener('mousemove', (e) => {
+    workspace.addEventListener('touchstart', (e) => {
+      if (!isImageLocked) return;
+      if (e.touches.length === 2) {
+        // ピンチズーム開始
+        initialPinchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialGlobalScale = globalScale;
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        // パン移動開始
+        startGlobalDrag(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+
+    // --- 移動中の処理（マウス・タッチ共通） ---
+    function handleMove(clientX, clientY) {
       if (isDraggingImage) {
-        imgPosX = startImgPosX + (e.clientX - startMouseX);
-        imgPosY = startImgPosY + (e.clientY - startMouseY);
+        imgPosX = startImgPosX + (clientX - startMouseX);
+        imgPosY = startImgPosY + (clientY - startMouseY);
         updateImageTransform();
       } else if (isDraggingGlobal) {
-        globalX = startGlobalX + (e.clientX - startMouseX);
-        globalY = startGlobalY + (e.clientY - startMouseY);
+        globalX = startGlobalX + (clientX - startMouseX);
+        globalY = startGlobalY + (clientY - startMouseY);
         updateGlobalTransform();
       }
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
-      isDraggingImage = false;
-      isDraggingGlobal = false;
-      if (isImageLocked) workspace.style.cursor = 'grab';
-    });
-
-    // --- タッチ対応 (スマホ/タブレット向け) ---
-    let initialPinchDistance = null;
-    let initialGlobalScale = 1;
-
-    workspace.addEventListener('touchstart', (e) => {
-      if (!isImageLocked) {
-        // ロック解除時：画像をタップしたかチェック
-        if (e.target === refImage) {
-          isDraggingImage = true;
-          startMouseX = e.touches[0].clientX; startMouseY = e.touches[0].clientY;
-          startImgPosX = imgPosX; startImgPosY = imgPosY;
-        }
-      } else {
-        // ロック時：全体操作
-        if (e.touches.length === 2) {
-          // 2本指（ピンチズーム）
-          initialPinchDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-          );
-          initialGlobalScale = globalScale;
-        } else if (e.touches.length === 1) {
-          // 1本指（パン移動）
-          isDraggingGlobal = true;
-          startMouseX = e.touches[0].clientX; startMouseY = e.touches[0].clientY;
-          startGlobalX = globalX; startGlobalY = globalY;
-        }
+    document.addEventListener('mousemove', (e) => {
+      if (isDraggingImage || isDraggingGlobal) {
+        handleMove(e.clientX, e.clientY);
       }
     });
 
     document.addEventListener('touchmove', (e) => {
-      if (isDraggingImage) {
-        imgPosX = startImgPosX + (e.touches[0].clientX - startMouseX);
-        imgPosY = startImgPosY + (e.touches[0].clientY - startMouseY);
-        e.preventDefault(); 
-      } else if (isImageLocked) {
-        if (e.touches.length === 2 && initialPinchDistance) {
-          const currentDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-          );
-          const scaleChange = currentDistance / initialPinchDistance;
-          globalScale = initialGlobalScale * scaleChange;
-          globalScale = Math.max(1, Math.min(globalScale, 5));
-          updateGlobalTransform();
-          e.preventDefault();
-        } else if (e.touches.length === 1 && isDraggingGlobal) {
-          globalX = startGlobalX + (e.touches[0].clientX - startMouseX);
-          globalY = startGlobalY + (e.touches[0].clientY - startMouseY);
-          updateGlobalTransform();
-          e.preventDefault();
-        }
+      if (isDraggingImage || isDraggingGlobal) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault(); // スクロール防止
+      } else if (isImageLocked && e.touches.length === 2 && initialPinchDistance) {
+        // ピンチズーム中
+        const currentDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        globalScale = initialGlobalScale * (currentDistance / initialPinchDistance);
+        globalScale = Math.max(1, Math.min(globalScale, 5));
+        updateGlobalTransform();
+        e.preventDefault();
       }
     }, { passive: false });
 
-    document.addEventListener('touchend', () => {
+
+    // --- ドラッグ終了処理 ---
+    function endDrag() {
       isDraggingImage = false;
       isDraggingGlobal = false;
       initialPinchDistance = null;
-    });
+      if (isImageLocked) workspace.style.cursor = 'grab';
+    }
+
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
 
     init();
   </script>
