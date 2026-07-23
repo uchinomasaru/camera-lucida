@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 修正版</title>
+  <title>カメラ・ルシダ アプリ - 全画面対応版</title>
 
   <!-- iOS（iPhone）用 フルスクリーン（PWA）表示設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,6 +22,23 @@
       height: 100vh;
       overflow: hidden; /* 画面全体の余計なスクロールを防止 */
     }
+    
+    /* フローティング「メニューを表示」ボタン */
+    #show-ui-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 100;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: 1px solid #777;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      display: none; /* 初期は操作パネルが出ているので非表示 */
+    }
+
     #controls {
       padding: 10px;
       background-color: #222;
@@ -40,6 +57,14 @@
       padding: 5px 10px;
       border-radius: 5px;
     }
+    
+    /* メニューを隠すボタンの特別デザイン */
+    #hide-ui-btn {
+      background-color: #5cb85c;
+      color: white;
+      font-weight: bold;
+    }
+
     #video-container {
       flex-grow: 1;
       display: flex;
@@ -48,7 +73,7 @@
       overflow: hidden; 
       position: relative;
       background-color: #000;
-      touch-action: none; /* ★重要: ブラウザのスワイプ戻るやスクロールを完全に無効化 */
+      touch-action: none; /* ブラウザのスワイプ戻るやスクロールを完全に無効化 */
     }
     #workspace {
       width: 100%;
@@ -74,7 +99,7 @@
       cursor: move;
       user-select: none;
       touch-action: none; 
-      pointer-events: auto; /* ★追加: ドラッグ判定を確実にする */
+      pointer-events: auto; /* ドラッグ判定を確実にする */
     }
     select, button, input[type="file"] {
       padding: 6px 10px;
@@ -103,6 +128,9 @@
   </style>
 </head>
 <body>
+
+  <!-- メニュー再表示ボタン (普段は隠れている) -->
+  <button id="show-ui-btn">⚙️ メニューを表示</button>
 
   <!-- 操作パネル -->
   <div id="controls">
@@ -137,6 +165,11 @@
     <div class="control-group">
       <button id="lock-btn">🔓 画像操作をロック</button>
     </div>
+
+    <!-- 追加: メニューを隠すボタン -->
+    <div class="control-group" style="margin-left: auto;">
+      <button id="hide-ui-btn">👁️ 画面を広くする</button>
+    </div>
   </div>
 
   <div id="video-container">
@@ -153,16 +186,31 @@
     const refImage = document.getElementById('reference-image');
     const workspace = document.getElementById('workspace');
     const videoContainer = document.getElementById('video-container');
+    const controlsDiv = document.getElementById('controls');
     
     const opacitySlider = document.getElementById('opacity-slider');
     const scaleSlider = document.getElementById('scale-slider');
     const rotateBtn = document.getElementById('rotate-btn');
     const lockBtn = document.getElementById('lock-btn');
     const focusLockBtn = document.getElementById('focus-lock-btn');
+    
+    const hideUiBtn = document.getElementById('hide-ui-btn');
+    const showUiBtn = document.getElementById('show-ui-btn');
 
     let currentStream = null;
     let isImageLocked = false;
     let isFocusLocked = false;
+
+    // --- UI（操作パネル）の表示・非表示 ---
+    hideUiBtn.addEventListener('click', () => {
+      controlsDiv.style.display = 'none'; // パネルを隠す
+      showUiBtn.style.display = 'block';  // 再表示ボタンを出す
+    });
+
+    showUiBtn.addEventListener('click', () => {
+      controlsDiv.style.display = 'flex'; // パネルを出す
+      showUiBtn.style.display = 'none';   // 再表示ボタンを隠す
+    });
 
     // --- 1. カメラ処理 ---
     async function init() {
@@ -302,7 +350,7 @@
       updateImageTransform();
     });
 
-    // --- 4. マウス＆タッチのドラッグ・ズーム処理 (★改善箇所) ---
+    // --- 4. マウス＆タッチのドラッグ・ズーム処理 ---
     let isDraggingImage = false;
     let isDraggingGlobal = false;
 
