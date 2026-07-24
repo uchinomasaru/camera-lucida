@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 濃紺フィルター版</title>
+  <title>カメラ・ルシダ アプリ - 超コンパクト版</title>
 
-  <!-- iOS（iPhone）用 フルスクリーン（PWA）表示設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="カメラルシダ">
@@ -39,15 +38,15 @@
     }
 
     #controls {
-      padding: 10px;
+      padding: 8px; /* パディングを少し狭く */
       background-color: #222;
       display: flex;
-      gap: 10px; 
+      gap: 6px; /* 隙間を狭く */
       align-items: center;
       flex-wrap: wrap; 
       border-bottom: 1px solid #444;
       z-index: 10; 
-      max-height: 45vh; 
+      max-height: 50vh; 
       overflow-y: auto; 
     }
     .control-group {
@@ -55,9 +54,10 @@
       align-items: center;
       gap: 5px;
       background: #444;
-      padding: 5px 10px;
+      padding: 4px 8px;
       border-radius: 5px;
       flex-wrap: wrap; 
+      font-size: 13px; /* フォントを少し小さく */
     }
     
     #hide-ui-btn {
@@ -102,50 +102,61 @@
       touch-action: none; 
       pointer-events: auto; 
     }
-    select, button, input[type="file"] {
-      padding: 6px 10px;
-      font-size: 14px;
+    
+    select, button {
+      padding: 5px 8px;
+      font-size: 13px;
       cursor: pointer;
       border: none;
       border-radius: 3px;
+      background-color: #eee;
+      color: #333;
     }
     button:disabled, input[type="range"]:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
+    
+    /* スライダーを短く制限 */
+    input[type="range"] {
+      width: 70px;
+    }
+
     .locked-btn {
-      background-color: #d9534f;
-      color: white;
-      font-weight: bold;
+      background-color: #d9534f !important;
+      color: white !important;
     }
     #focus-lock-btn {
       background-color: #5bc0de;
       color: white;
-      font-weight: bold;
     }
     #focus-lock-btn.locked-btn {
-      background-color: #f0ad4e;
+      background-color: #f0ad4e !important;
     }
     .active-filter-btn {
-      background-color: #3b5998 !important; /* ボタンも濃紺っぽく */
-      color: white;
+      background-color: #3b5998 !important;
+      color: white !important;
     }
     
-    /* SVGフィルターを隠す設定 */
     .svg-filter-hide {
       position: absolute;
-      width: 0;
-      height: 0;
-      pointer-events: none;
+      width: 0; height: 0; pointer-events: none;
+    }
+
+    /* カメラ設定パネル用 */
+    #camera-panel {
+      flex-basis: 100%; /* 横幅いっぱいに広げる */
+      display: none; /* 初期は隠す */
+      background-color: #333;
+      margin-top: 2px;
     }
   </style>
 </head>
 <body>
 
-  <!-- ★追加：画像を濃紺に変換するためのSVGフィルター -->
+  <!-- SVGフィルター（黒を濃紺にする） -->
   <svg class="svg-filter-hide">
     <filter id="navy-tint">
-      <!-- 白はそのまま白に、黒い部分を濃紺（Navy Blue）に変換する計算式 -->
       <feColorMatrix type="matrix" values="
         0.33 0.33 0.33 0 0
         0.33 0.33 0.33 0 0.15
@@ -158,43 +169,43 @@
   <button id="show-ui-btn">⚙️ メニューを表示</button>
 
   <div id="controls">
+    <!-- 画像を開く (コンパクト版) -->
     <div class="control-group">
-      <label for="camera-select">カメラ:</label>
-      <select id="camera-select"><option value="">検索中...</option></select>
-    </div>
-    
-    <div class="control-group">
-      <button id="focus-lock-btn" disabled>AFロック</button>
+      <button id="custom-image-btn">🖼️ 画像</button>
+      <input type="file" id="image-input" accept="image/*" style="display: none;">
     </div>
 
-    <div class="control-group">
-      <label for="image-input">画像:</label>
-      <input type="file" id="image-input" accept="image/*">
-    </div>
-
+    <!-- スライダー類 -->
     <div class="control-group">
       <label>透過:</label>
       <input type="range" id="opacity-slider" min="0" max="100" value="50">
-    </div>
-
-    <div class="control-group">
-      <label>縮小/拡大:</label>
+      <label>サイズ:</label>
       <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
     </div>
 
+    <!-- 変形・フィルター（アイコン中心） -->
     <div class="control-group">
-      <button id="rotate-btn">🔄 90度回転</button>
-      <button id="flip-btn">↔ 左右反転</button>
-      <!-- ★白黒化を「濃紺化」ボタンに変更 -->
-      <button id="navy-btn">🔵 濃紺化 (トレース用)</button>
+      <button id="rotate-btn" title="90度回転">🔄</button>
+      <button id="flip-btn" title="左右反転">↔</button>
+      <button id="navy-btn">🔵 白黒化</button>
     </div>
 
+    <!-- その他の操作 -->
     <div class="control-group">
-      <button id="lock-btn">🔓 画像操作をロック</button>
+      <button id="lock-btn">🔓 ロック</button>
+      <button id="camera-settings-btn">⚙️ カメラ</button>
     </div>
 
+    <!-- パネル非表示 -->
     <div class="control-group" style="margin-left: auto;">
-      <button id="hide-ui-btn">👁️ 画面を広くする</button>
+      <button id="hide-ui-btn">👁️ 隠す</button>
+    </div>
+
+    <!-- カメラ設定（隠しメニュー） -->
+    <div class="control-group" id="camera-panel">
+      <label for="camera-select">カメラ:</label>
+      <select id="camera-select"><option value="">検索中...</option></select>
+      <button id="focus-lock-btn" disabled>AFロック</button>
     </div>
   </div>
 
@@ -209,6 +220,7 @@
     const videoElement = document.getElementById('camera-view');
     const cameraSelect = document.getElementById('camera-select');
     const imageInput = document.getElementById('image-input');
+    const customImageBtn = document.getElementById('custom-image-btn');
     const refImage = document.getElementById('reference-image');
     const workspace = document.getElementById('workspace');
     const videoContainer = document.getElementById('video-container');
@@ -218,18 +230,21 @@
     const scaleSlider = document.getElementById('scale-slider');
     const rotateBtn = document.getElementById('rotate-btn');
     const flipBtn = document.getElementById('flip-btn');
-    const navyBtn = document.getElementById('navy-btn'); // ★変更
+    const navyBtn = document.getElementById('navy-btn');
     const lockBtn = document.getElementById('lock-btn');
     const focusLockBtn = document.getElementById('focus-lock-btn');
     
     const hideUiBtn = document.getElementById('hide-ui-btn');
     const showUiBtn = document.getElementById('show-ui-btn');
+    
+    const cameraSettingsBtn = document.getElementById('camera-settings-btn');
+    const cameraPanel = document.getElementById('camera-panel');
 
     let currentStream = null;
     let isImageLocked = false;
     let isFocusLocked = false;
 
-    // --- UI（操作パネル）の表示・非表示 ---
+    // --- メニュー表示・非表示 ---
     hideUiBtn.addEventListener('click', () => {
       controlsDiv.style.display = 'none';
       showUiBtn.style.display = 'block'; 
@@ -237,6 +252,22 @@
     showUiBtn.addEventListener('click', () => {
       controlsDiv.style.display = 'flex';
       showUiBtn.style.display = 'none';  
+    });
+
+    // --- カメラ設定メニューの開閉 ---
+    cameraSettingsBtn.addEventListener('click', () => {
+      if (cameraPanel.style.display === 'none') {
+        cameraPanel.style.display = 'flex';
+        cameraSettingsBtn.classList.add('active-filter-btn');
+      } else {
+        cameraPanel.style.display = 'none';
+        cameraSettingsBtn.classList.remove('active-filter-btn');
+      }
+    });
+
+    // --- カスタム画像選択ボタン ---
+    customImageBtn.addEventListener('click', () => {
+      imageInput.click(); // 隠した本来のボタンを自動クリック
     });
 
     // --- 1. カメラ処理 ---
@@ -287,12 +318,12 @@
       const capabilities = track.getCapabilities ? track.getCapabilities() : {};
       if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
         focusLockBtn.disabled = false;
-        focusLockBtn.textContent = '🔓 オートフォーカス (AF)';
+        focusLockBtn.textContent = '🔓 AFロック';
         focusLockBtn.classList.remove('locked-btn');
         isFocusLocked = false;
       } else {
         focusLockBtn.disabled = true;
-        focusLockBtn.textContent = 'AFロック (未対応)';
+        focusLockBtn.textContent = '未対応';
         focusLockBtn.classList.remove('locked-btn');
       }
     }
@@ -305,12 +336,12 @@
           if (!isFocusLocked) {
             await track.applyConstraints({ advanced: [{ focusMode: "manual" }] });
             isFocusLocked = true;
-            focusLockBtn.textContent = '🔒 ピント固定中 (MF)';
+            focusLockBtn.textContent = '🔒 ピント固定';
             focusLockBtn.classList.add('locked-btn');
           } else {
             await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
             isFocusLocked = false;
-            focusLockBtn.textContent = '🔓 オートフォーカス (AF)';
+            focusLockBtn.textContent = '🔓 AFロック';
             focusLockBtn.classList.remove('locked-btn');
           }
         } catch (err) {
@@ -319,27 +350,27 @@
       }
     });
 
-    // --- 2. 画像読み込み・操作パネル ---
+    // --- 2. 画像操作のロック ---
     lockBtn.addEventListener('click', () => {
       isImageLocked = !isImageLocked;
       if (isImageLocked) {
-        lockBtn.textContent = '🔒 ロック解除 (ズーム可)';
+        lockBtn.textContent = '🔒 解除';
         lockBtn.classList.add('locked-btn');
         opacitySlider.disabled = true;
         scaleSlider.disabled = true;
         rotateBtn.disabled = true;
         flipBtn.disabled = true;
-        navyBtn.disabled = true; // ★変更
+        navyBtn.disabled = true;
         refImage.style.cursor = 'default';
         workspace.style.cursor = 'grab'; 
       } else {
-        lockBtn.textContent = '🔓 画像操作をロック';
+        lockBtn.textContent = '🔓 ロック';
         lockBtn.classList.remove('locked-btn');
         opacitySlider.disabled = false;
         scaleSlider.disabled = false;
         rotateBtn.disabled = false;
         flipBtn.disabled = false;
-        navyBtn.disabled = false; // ★変更
+        navyBtn.disabled = false;
         refImage.style.cursor = 'move';
         workspace.style.cursor = 'default';
       }
@@ -364,7 +395,7 @@
 
     // --- 3. 画像単体の変形 ---
     let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1;
-    let isNavy = false; // ★変更
+    let isNavy = false;
 
     function updateImageTransform() {
       refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`;
@@ -374,10 +405,9 @@
       imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0; imgFlipX = 1;
       scaleSlider.value = 1;
       
-      // 濃紺化もリセット
       isNavy = false;
       refImage.style.filter = 'none';
-      navyBtn.textContent = '🔵 濃紺化 (トレース用)';
+      navyBtn.textContent = '🔵 白黒化';
       navyBtn.classList.remove('active-filter-btn');
       
       updateImageTransform();
@@ -398,17 +428,15 @@
       updateImageTransform();
     });
 
-    // ★濃紺化の処理
     navyBtn.addEventListener('click', () => {
       isNavy = !isNavy;
       if (isNavy) {
-        // SVGで定義したフィルターを適用
         refImage.style.filter = 'url(#navy-tint)';
-        navyBtn.textContent = '🎨 カラーに戻す';
+        navyBtn.textContent = '🎨 カラー';
         navyBtn.classList.add('active-filter-btn');
       } else {
         refImage.style.filter = 'none';
-        navyBtn.textContent = '🔵 濃紺化 (トレース用)';
+        navyBtn.textContent = '🔵 白黒化';
         navyBtn.classList.remove('active-filter-btn');
       }
     });
