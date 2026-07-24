@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - フィルター追加版</title>
+  <title>カメラ・ルシダ アプリ - 濃紺フィルター版</title>
 
   <!-- iOS（iPhone）用 フルスクリーン（PWA）表示設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,10 +20,9 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden; /* 画面全体の余計なスクロールを防止 */
+      overflow: hidden; 
     }
     
-    /* フローティング「メニューを表示」ボタン */
     #show-ui-btn {
       position: absolute;
       top: 15px;
@@ -36,18 +35,20 @@
       border-radius: 5px;
       font-size: 14px;
       cursor: pointer;
-      display: none; /* 初期は操作パネルが出ているので非表示 */
+      display: none;
     }
 
     #controls {
       padding: 10px;
       background-color: #222;
       display: flex;
-      gap: 15px;
+      gap: 10px; 
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: wrap; 
       border-bottom: 1px solid #444;
       z-index: 10; 
+      max-height: 45vh; 
+      overflow-y: auto; 
     }
     .control-group {
       display: flex;
@@ -56,9 +57,9 @@
       background: #444;
       padding: 5px 10px;
       border-radius: 5px;
+      flex-wrap: wrap; 
     }
     
-    /* メニューを隠すボタンの特別デザイン */
     #hide-ui-btn {
       background-color: #5cb85c;
       color: white;
@@ -73,7 +74,7 @@
       overflow: hidden; 
       position: relative;
       background-color: #000;
-      touch-action: none; /* ブラウザのスワイプ戻るやスクロールを完全に無効化 */
+      touch-action: none;
     }
     #workspace {
       width: 100%;
@@ -99,7 +100,7 @@
       cursor: move;
       user-select: none;
       touch-action: none; 
-      pointer-events: auto; /* ドラッグ判定を確実にする */
+      pointer-events: auto; 
     }
     select, button, input[type="file"] {
       padding: 6px 10px;
@@ -126,17 +127,36 @@
       background-color: #f0ad4e;
     }
     .active-filter-btn {
-      background-color: #999 !important;
+      background-color: #3b5998 !important; /* ボタンも濃紺っぽく */
       color: white;
+    }
+    
+    /* SVGフィルターを隠す設定 */
+    .svg-filter-hide {
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
 
-  <!-- メニュー再表示ボタン (普段は隠れている) -->
+  <!-- ★追加：画像を濃紺に変換するためのSVGフィルター -->
+  <svg class="svg-filter-hide">
+    <filter id="navy-tint">
+      <!-- 白はそのまま白に、黒い部分を濃紺（Navy Blue）に変換する計算式 -->
+      <feColorMatrix type="matrix" values="
+        0.33 0.33 0.33 0 0
+        0.33 0.33 0.33 0 0.15
+        0.33 0.33 0.33 0 0.5
+        0    0    0    1 0
+      " />
+    </filter>
+  </svg>
+
   <button id="show-ui-btn">⚙️ メニューを表示</button>
 
-  <!-- 操作パネル -->
   <div id="controls">
     <div class="control-group">
       <label for="camera-select">カメラ:</label>
@@ -144,7 +164,7 @@
     </div>
     
     <div class="control-group">
-      <button id="focus-lock-btn" disabled>AFロック(未対応)</button>
+      <button id="focus-lock-btn" disabled>AFロック</button>
     </div>
 
     <div class="control-group">
@@ -163,16 +183,16 @@
     </div>
 
     <div class="control-group">
-      <button id="rotate-btn">90度 左回転</button>
+      <button id="rotate-btn">🔄 90度回転</button>
       <button id="flip-btn">↔ 左右反転</button>
-      <button id="grayscale-btn">⚫️⚪️ 白黒化</button>
+      <!-- ★白黒化を「濃紺化」ボタンに変更 -->
+      <button id="navy-btn">🔵 濃紺化 (トレース用)</button>
     </div>
 
     <div class="control-group">
       <button id="lock-btn">🔓 画像操作をロック</button>
     </div>
 
-    <!-- メニューを隠すボタン -->
     <div class="control-group" style="margin-left: auto;">
       <button id="hide-ui-btn">👁️ 画面を広くする</button>
     </div>
@@ -198,7 +218,7 @@
     const scaleSlider = document.getElementById('scale-slider');
     const rotateBtn = document.getElementById('rotate-btn');
     const flipBtn = document.getElementById('flip-btn');
-    const grayscaleBtn = document.getElementById('grayscale-btn');
+    const navyBtn = document.getElementById('navy-btn'); // ★変更
     const lockBtn = document.getElementById('lock-btn');
     const focusLockBtn = document.getElementById('focus-lock-btn');
     
@@ -211,13 +231,12 @@
 
     // --- UI（操作パネル）の表示・非表示 ---
     hideUiBtn.addEventListener('click', () => {
-      controlsDiv.style.display = 'none'; // パネルを隠す
-      showUiBtn.style.display = 'block';  // 再表示ボタンを出す
+      controlsDiv.style.display = 'none';
+      showUiBtn.style.display = 'block'; 
     });
-
     showUiBtn.addEventListener('click', () => {
-      controlsDiv.style.display = 'flex'; // パネルを出す
-      showUiBtn.style.display = 'none';   // 再表示ボタンを隠す
+      controlsDiv.style.display = 'flex';
+      showUiBtn.style.display = 'none';  
     });
 
     // --- 1. カメラ処理 ---
@@ -310,7 +329,7 @@
         scaleSlider.disabled = true;
         rotateBtn.disabled = true;
         flipBtn.disabled = true;
-        grayscaleBtn.disabled = true;
+        navyBtn.disabled = true; // ★変更
         refImage.style.cursor = 'default';
         workspace.style.cursor = 'grab'; 
       } else {
@@ -320,7 +339,7 @@
         scaleSlider.disabled = false;
         rotateBtn.disabled = false;
         flipBtn.disabled = false;
-        grayscaleBtn.disabled = false;
+        navyBtn.disabled = false; // ★変更
         refImage.style.cursor = 'move';
         workspace.style.cursor = 'default';
       }
@@ -345,10 +364,9 @@
 
     // --- 3. 画像単体の変形 ---
     let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1;
-    let isGrayscale = false;
+    let isNavy = false; // ★変更
 
     function updateImageTransform() {
-      // scale(X, Y) を利用して、X軸のスケールに imgFlipX (1 または -1) を掛けることで左右反転を実現
       refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`;
     }
     
@@ -356,11 +374,11 @@
       imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0; imgFlipX = 1;
       scaleSlider.value = 1;
       
-      // 白黒化もリセット
-      isGrayscale = false;
+      // 濃紺化もリセット
+      isNavy = false;
       refImage.style.filter = 'none';
-      grayscaleBtn.textContent = '⚫️⚪️ 白黒化';
-      grayscaleBtn.classList.remove('active-filter-btn');
+      navyBtn.textContent = '🔵 濃紺化 (トレース用)';
+      navyBtn.classList.remove('active-filter-btn');
       
       updateImageTransform();
     }
@@ -376,23 +394,24 @@
     });
 
     flipBtn.addEventListener('click', () => {
-      imgFlipX *= -1; // 1と-1を切り替える
+      imgFlipX *= -1; 
       updateImageTransform();
     });
 
-    grayscaleBtn.addEventListener('click', () => {
-      isGrayscale = !isGrayscale;
-      if (isGrayscale) {
-        refImage.style.filter = 'grayscale(100%)';
-        grayscaleBtn.textContent = '🎨 カラーに戻す';
-        grayscaleBtn.classList.add('active-filter-btn');
+    // ★濃紺化の処理
+    navyBtn.addEventListener('click', () => {
+      isNavy = !isNavy;
+      if (isNavy) {
+        // SVGで定義したフィルターを適用
+        refImage.style.filter = 'url(#navy-tint)';
+        navyBtn.textContent = '🎨 カラーに戻す';
+        navyBtn.classList.add('active-filter-btn');
       } else {
         refImage.style.filter = 'none';
-        grayscaleBtn.textContent = '⚫️⚪️ 白黒化';
-        grayscaleBtn.classList.remove('active-filter-btn');
+        navyBtn.textContent = '🔵 濃紺化 (トレース用)';
+        navyBtn.classList.remove('active-filter-btn');
       }
     });
-
 
     // --- 4. マウス＆タッチのドラッグ・ズーム処理 ---
     let isDraggingImage = false;
@@ -415,7 +434,6 @@
       updateGlobalTransform();
     }
 
-    // 全体ズームリセット（ダブルクリック）
     videoContainer.addEventListener('dblclick', () => {
       if (isImageLocked) resetGlobalZoom();
     });
@@ -430,8 +448,6 @@
       updateGlobalTransform();
     }, { passive: false });
 
-
-    // --- 【画像単体】のドラッグ開始イベント ---
     function startImageDrag(clientX, clientY) {
       if (isImageLocked) return;
       isDraggingImage = true;
@@ -444,20 +460,18 @@
     refImage.addEventListener('mousedown', (e) => {
       startImageDrag(e.clientX, e.clientY);
       e.preventDefault();
-      e.stopPropagation(); // 背景へのクリックをブロック
+      e.stopPropagation(); 
     });
 
     refImage.addEventListener('touchstart', (e) => {
       if (isImageLocked) return;
-      if (e.touches.length === 1) { // 1本指の時だけ画像ドラッグ
+      if (e.touches.length === 1) { 
         startImageDrag(e.touches[0].clientX, e.touches[0].clientY);
         e.preventDefault();
         e.stopPropagation();
       }
     }, { passive: false });
 
-
-    // --- 【全体（背景）】のドラッグ・ズーム開始イベント ---
     function startGlobalDrag(clientX, clientY) {
       if (!isImageLocked) return;
       isDraggingGlobal = true;
@@ -476,7 +490,6 @@
     workspace.addEventListener('touchstart', (e) => {
       if (!isImageLocked) return;
       if (e.touches.length === 2) {
-        // ピンチズーム開始
         initialPinchDistance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
@@ -484,14 +497,11 @@
         initialGlobalScale = globalScale;
         e.preventDefault();
       } else if (e.touches.length === 1) {
-        // パン移動開始
         startGlobalDrag(e.touches[0].clientX, e.touches[0].clientY);
         e.preventDefault();
       }
     }, { passive: false });
 
-
-    // --- 移動中の処理（マウス・タッチ共通） ---
     function handleMove(clientX, clientY) {
       if (isDraggingImage) {
         imgPosX = startImgPosX + (clientX - startMouseX);
@@ -513,9 +523,8 @@
     document.addEventListener('touchmove', (e) => {
       if (isDraggingImage || isDraggingGlobal) {
         handleMove(e.touches[0].clientX, e.touches[0].clientY);
-        e.preventDefault(); // スクロール防止
+        e.preventDefault(); 
       } else if (isImageLocked && e.touches.length === 2 && initialPinchDistance) {
-        // ピンチズーム中
         const currentDistance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
@@ -527,8 +536,6 @@
       }
     }, { passive: false });
 
-
-    // --- ドラッグ終了処理 ---
     function endDrag() {
       isDraggingImage = false;
       isDraggingGlobal = false;
