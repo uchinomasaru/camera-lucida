@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 全画面対応版</title>
+  <title>カメラ・ルシダ アプリ - フィルター追加版</title>
 
   <!-- iOS（iPhone）用 フルスクリーン（PWA）表示設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -125,6 +125,10 @@
     #focus-lock-btn.locked-btn {
       background-color: #f0ad4e;
     }
+    .active-filter-btn {
+      background-color: #999 !important;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -160,13 +164,15 @@
 
     <div class="control-group">
       <button id="rotate-btn">90度 左回転</button>
+      <button id="flip-btn">↔ 左右反転</button>
+      <button id="grayscale-btn">⚫️⚪️ 白黒化</button>
     </div>
 
     <div class="control-group">
       <button id="lock-btn">🔓 画像操作をロック</button>
     </div>
 
-    <!-- 追加: メニューを隠すボタン -->
+    <!-- メニューを隠すボタン -->
     <div class="control-group" style="margin-left: auto;">
       <button id="hide-ui-btn">👁️ 画面を広くする</button>
     </div>
@@ -191,6 +197,8 @@
     const opacitySlider = document.getElementById('opacity-slider');
     const scaleSlider = document.getElementById('scale-slider');
     const rotateBtn = document.getElementById('rotate-btn');
+    const flipBtn = document.getElementById('flip-btn');
+    const grayscaleBtn = document.getElementById('grayscale-btn');
     const lockBtn = document.getElementById('lock-btn');
     const focusLockBtn = document.getElementById('focus-lock-btn');
     
@@ -301,6 +309,8 @@
         opacitySlider.disabled = true;
         scaleSlider.disabled = true;
         rotateBtn.disabled = true;
+        flipBtn.disabled = true;
+        grayscaleBtn.disabled = true;
         refImage.style.cursor = 'default';
         workspace.style.cursor = 'grab'; 
       } else {
@@ -309,6 +319,8 @@
         opacitySlider.disabled = false;
         scaleSlider.disabled = false;
         rotateBtn.disabled = false;
+        flipBtn.disabled = false;
+        grayscaleBtn.disabled = false;
         refImage.style.cursor = 'move';
         workspace.style.cursor = 'default';
       }
@@ -332,23 +344,55 @@
     });
 
     // --- 3. 画像単体の変形 ---
-    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0;
+    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1;
+    let isGrayscale = false;
+
     function updateImageTransform() {
-      refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale})`;
+      // scale(X, Y) を利用して、X軸のスケールに imgFlipX (1 または -1) を掛けることで左右反転を実現
+      refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`;
     }
+    
     function resetImageTransform() {
-      imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0;
+      imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0; imgFlipX = 1;
       scaleSlider.value = 1;
+      
+      // 白黒化もリセット
+      isGrayscale = false;
+      refImage.style.filter = 'none';
+      grayscaleBtn.textContent = '⚫️⚪️ 白黒化';
+      grayscaleBtn.classList.remove('active-filter-btn');
+      
       updateImageTransform();
     }
+
     scaleSlider.addEventListener('input', (e) => {
       imgScale = parseFloat(e.target.value);
       updateImageTransform();
     });
+
     rotateBtn.addEventListener('click', () => {
       imgRotate -= 90;
       updateImageTransform();
     });
+
+    flipBtn.addEventListener('click', () => {
+      imgFlipX *= -1; // 1と-1を切り替える
+      updateImageTransform();
+    });
+
+    grayscaleBtn.addEventListener('click', () => {
+      isGrayscale = !isGrayscale;
+      if (isGrayscale) {
+        refImage.style.filter = 'grayscale(100%)';
+        grayscaleBtn.textContent = '🎨 カラーに戻す';
+        grayscaleBtn.classList.add('active-filter-btn');
+      } else {
+        refImage.style.filter = 'none';
+        grayscaleBtn.textContent = '⚫️⚪️ 白黒化';
+        grayscaleBtn.classList.remove('active-filter-btn');
+      }
+    });
+
 
     // --- 4. マウス＆タッチのドラッグ・ズーム処理 ---
     let isDraggingImage = false;
