@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 製品版/お試し版</title>
+  <title>カメラ・ルシダ アプリ - 濃淡抽出機能版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,73 +11,61 @@
 
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #333;
-      color: white;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden; 
+      margin: 0; padding: 0; background-color: #333; color: white;
+      font-family: sans-serif; display: flex; flex-direction: column;
+      height: 100vh; overflow: hidden; 
     }
 
+    /* パスワード画面 */
     #password-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #222;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: #222; z-index: 9999; display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
     }
     #password-screen h2 { margin-bottom: 20px; }
     #password-screen p { margin-bottom: 10px; font-size: 14px; color: #ccc; text-align: center; line-height: 1.5; }
     #pass-input {
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-      border: none;
-      text-align: center;
-      width: 220px;
+      padding: 10px; font-size: 16px; margin-bottom: 15px; border-radius: 5px;
+      border: none; text-align: center; width: 220px;
     }
     #login-btn {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #5cb85c;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
+      padding: 10px 20px; font-size: 16px; background-color: #5cb85c; color: white;
+      border: none; border-radius: 5px; font-weight: bold; cursor: pointer;
     }
     #error-msg {
-      color: #d9534f;
-      margin-top: 15px;
-      display: none;
-      font-weight: bold;
-      text-align: center;
-      padding: 0 20px;
+      color: #d9534f; margin-top: 15px; display: none; font-weight: bold;
+      text-align: center; padding: 0 20px;
     }
     
+    /* フローティングボタン */
     #show-ui-btn { position: absolute; top: 15px; right: 15px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 10px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
     #toggle-image-btn { position: absolute; bottom: 20px; left: 20px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 12px 15px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: none; }
     .image-hidden-state { background-color: #5cb85c !important; border-color: #4cae4c !important; }
+    
+    /* 操作パネル */
     #controls { padding: 8px; background-color: #222; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #444; z-index: 10; max-height: 50vh; overflow-y: auto; }
     .control-group { display: flex; align-items: center; gap: 5px; background: #444; padding: 4px 8px; border-radius: 5px; flex-wrap: wrap; font-size: 13px; }
     #hide-ui-btn { background-color: #5cb85c; color: white; font-weight: bold; }
+    
+    /* 濃淡パレット用デザイン */
+    .tone-btn {
+      width: 28px; height: 28px; padding: 0 !important; border-radius: 4px;
+      font-weight: bold; display: flex; justify-content: center; align-items: center;
+      border: 1px solid #777 !important;
+    }
+    .active-tone {
+      outline: 3px solid #5bc0de; outline-offset: -1px; z-index: 2;
+    }
+
     #video-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; background-color: #000; touch-action: none; }
     #workspace { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: absolute; transform-origin: center center; }
     video { max-width: 100%; max-height: 100%; z-index: 1; }
     #reference-image { position: absolute; max-width: 100%; max-height: 100%; z-index: 2; opacity: 0.5; display: none; cursor: move; user-select: none; touch-action: none; pointer-events: auto; }
+    
     select, button { padding: 5px 8px; font-size: 13px; cursor: pointer; border: none; border-radius: 3px; background-color: #eee; color: #333; }
     button:disabled, input[type="range"]:disabled { opacity: 0.5; cursor: not-allowed; }
     input[type="range"] { width: 70px; }
+    
     .locked-btn { background-color: #d9534f !important; color: white !important; }
     #focus-lock-btn { background-color: #5bc0de; color: white; }
     #focus-lock-btn.locked-btn { background-color: #f0ad4e !important; }
@@ -94,7 +82,7 @@
     <p>製品版パスワード、または<br>お試し用パスワードを入力してください</p>
     <input type="password" id="pass-input" placeholder="パスワードを入力">
     <button id="login-btn">アプリを起動</button>
-    <p id="error-msg">パスワードが違います</p>
+    <p id="error-msg"></p>
   </div>
 
   <svg class="svg-filter-hide">
@@ -111,22 +99,38 @@
       <button id="custom-image-btn">🖼️ 画像</button>
       <input type="file" id="image-input" accept="image/*" style="display: none;">
     </div>
+    
+    <!-- ★追加：5段階濃淡抽出パレット（初期は非表示） -->
+    <div class="control-group" id="tone-controls" style="display: none;">
+      <label>抽出:</label>
+      <button class="tone-btn active-tone" data-tone="all" style="background:#eee; color:#333; width:34px;">全</button>
+      <button class="tone-btn" data-tone="0" style="background:#000; color:#fff;" title="一番暗い影">1</button>
+      <button class="tone-btn" data-tone="1" style="background:#404040; color:#fff;">2</button>
+      <button class="tone-btn" data-tone="2" style="background:#808080; color:#fff;">3</button>
+      <button class="tone-btn" data-tone="3" style="background:#c0c0c0; color:#000;">4</button>
+      <button class="tone-btn" data-tone="4" style="background:#fff; color:#000;" title="一番明るい光">5</button>
+    </div>
+
     <div class="control-group">
       <label>透過:</label><input type="range" id="opacity-slider" min="0" max="100" value="50">
       <label>サイズ:</label><input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
     </div>
+    
     <div class="control-group">
       <button id="rotate-btn" title="90度回転">🔄</button>
       <button id="flip-btn" title="左右反転">↔</button>
       <button id="navy-btn">🔵 白黒化</button>
     </div>
+    
     <div class="control-group">
       <button id="lock-btn">🔓 ロック</button>
       <button id="camera-settings-btn">⚙️ カメラ</button>
     </div>
+    
     <div class="control-group" style="margin-left: auto;">
       <button id="hide-ui-btn">👁️ 隠す</button>
     </div>
+    
     <div class="control-group" id="camera-panel">
       <label for="camera-select">カメラ:</label><select id="camera-select"><option value="">検索中...</option></select>
       <button id="focus-lock-btn" disabled>AFロック</button>
@@ -141,65 +145,51 @@
   </div>
 
   <script>
-    // --- パスワードとお試し版の処理 ---
+    // --- パスワード処理 ---
     const passwordScreen = document.getElementById('password-screen');
     const passInput = document.getElementById('pass-input');
     const loginBtn = document.getElementById('login-btn');
     const errorMsg = document.getElementById('error-msg');
 
-    // ★パスワードの設定
-    const SECRET_PASSWORD = "camera2026"; // 製品版（無制限）
-    const TRIAL_PASSWORD = "trial";       // お試し版（7日間限定）
-    const TRIAL_DAYS = 7;                 // お試し期間の日数
+    const SECRET_PASSWORD = "camera2026"; 
+    const TRIAL_PASSWORD = "trial";       
+    const TRIAL_DAYS = 7;                 
 
     loginBtn.addEventListener('click', () => {
       const inputVal = passInput.value;
-
       if (inputVal === SECRET_PASSWORD) {
-        // ① 製品版パスワードの場合：無条件で通過
         passwordScreen.style.display = 'none';
         init(); 
-      } 
-      else if (inputVal === TRIAL_PASSWORD) {
-        // ② お試し版パスワードの場合：日数をチェック
+      } else if (inputVal === TRIAL_PASSWORD) {
         const now = new Date().getTime();
         let trialStart = localStorage.getItem('cameraLucidaTrialStart');
-
         if (!trialStart) {
-          // 初回ログイン時：現在の日時を保存
           localStorage.setItem('cameraLucidaTrialStart', now);
           alert("お試し版を開始します。\n本日から7日間利用可能です。");
           passwordScreen.style.display = 'none';
           init();
         } else {
-          // 2回目以降：経過日数を計算
           const diffTime = now - parseInt(trialStart);
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
           const leftDays = TRIAL_DAYS - diffDays;
-
           if (leftDays > 0) {
             alert(`お試し期間中です。\n（残り ${leftDays} 日）`);
             passwordScreen.style.display = 'none';
             init();
           } else {
-            // 期限切れ
-            errorMsg.innerHTML = "お試し期間（7日間）が終了しました。<br>引き続きご利用になるには製品版をご購入ください。";
+            errorMsg.innerHTML = "お試し期間（7日間）が終了しました。<br>製品版をご購入ください。";
             errorMsg.style.display = 'block';
           }
         }
-      } 
-      else {
-        // ③ パスワード間違い
+      } else {
         errorMsg.textContent = "パスワードが違います";
         errorMsg.style.display = 'block';
       }
     });
 
-    passInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loginBtn.click();
-    });
+    passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginBtn.click(); });
 
-    // --- 各種要素の取得とUI処理 ---
+    // --- 要素取得 ---
     const videoElement = document.getElementById('camera-view');
     const cameraSelect = document.getElementById('camera-select');
     const imageInput = document.getElementById('image-input');
@@ -222,33 +212,113 @@
     const toggleImageBtn = document.getElementById('toggle-image-btn');
     const cameraSettingsBtn = document.getElementById('camera-settings-btn');
     const cameraPanel = document.getElementById('camera-panel');
+    const toneControls = document.getElementById('tone-controls');
+    const toneBtns = document.querySelectorAll('.tone-btn');
 
-    let currentStream = null;
-    let isImageLocked = false;
-    let isFocusLocked = false;
-    let isImageHidden = false;
+    let currentStream = null, isImageLocked = false, isFocusLocked = false, isImageHidden = false;
+    let originalImageObj = new Image(); // 濃淡抽出用に元画像を保持する
 
+    // --- UIトグル ---
     hideUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'none'; showUiBtn.style.display = 'block'; });
     showUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'flex'; showUiBtn.style.display = 'none'; });
-
     cameraSettingsBtn.addEventListener('click', () => {
-      if (cameraPanel.style.display === 'none') {
-        cameraPanel.style.display = 'flex'; cameraSettingsBtn.classList.add('active-filter-btn');
-      } else {
-        cameraPanel.style.display = 'none'; cameraSettingsBtn.classList.remove('active-filter-btn');
-      }
+      if (cameraPanel.style.display === 'none') { cameraPanel.style.display = 'flex'; cameraSettingsBtn.classList.add('active-filter-btn'); } 
+      else { cameraPanel.style.display = 'none'; cameraSettingsBtn.classList.remove('active-filter-btn'); }
     });
-
     customImageBtn.addEventListener('click', () => { imageInput.click(); });
-
     toggleImageBtn.addEventListener('click', () => {
       isImageHidden = !isImageHidden;
-      if (isImageHidden) {
-        refImage.style.display = 'none'; toggleImageBtn.textContent = '🖼️ 画像を表示'; toggleImageBtn.classList.add('image-hidden-state');
-      } else {
-        refImage.style.display = 'block'; toggleImageBtn.textContent = '👁️ 画像を隠す'; toggleImageBtn.classList.remove('image-hidden-state');
+      if (isImageHidden) { refImage.style.display = 'none'; toggleImageBtn.textContent = '🖼️ 画像を表示'; toggleImageBtn.classList.add('image-hidden-state'); } 
+      else { refImage.style.display = 'block'; toggleImageBtn.textContent = '👁️ 画像を隠す'; toggleImageBtn.classList.remove('image-hidden-state'); }
+    });
+
+    // --- ★追加：画像読み込みと濃淡抽出機能 ---
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          originalImageObj.onload = () => {
+            // 画像がロードされたら「全」表示に戻してパレットを表示
+            refImage.src = originalImageObj.src;
+            refImage.style.display = 'block';
+            toneControls.style.display = 'flex';
+            toggleImageBtn.style.display = 'block';
+            isImageHidden = false;
+            toggleImageBtn.textContent = '👁️ 画像を隠す'; 
+            toggleImageBtn.classList.remove('image-hidden-state');
+            
+            // ボタンのアクティブ状態リセット
+            toneBtns.forEach(b => b.classList.remove('active-tone'));
+            document.querySelector('[data-tone="all"]').classList.add('active-tone');
+            
+            resetImageTransform();
+          };
+          originalImageObj.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
       }
     });
+
+    // 濃淡（トーン）抽出ロジック
+    function applyToneFilter(toneLevel) {
+      if (!originalImageObj.src) return;
+
+      // 「白黒化」がオンになっていたらオフにする（競合を防ぐため）
+      if(isNavy) navyBtn.click();
+
+      if (toneLevel === 'all') {
+        refImage.src = originalImageObj.src;
+        return;
+      }
+
+      // キャンバスを使ってピクセル単位で明度を解析
+      const canvas = document.createElement('canvas');
+      canvas.width = originalImageObj.width;
+      canvas.height = originalImageObj.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(originalImageObj, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      const targetLevel = parseInt(toneLevel);
+      
+      // 抽出した箇所を描画する色（0:黒, 1:濃灰, 2:灰, 3:薄灰, 4:白）
+      const levelColors = [0, 64, 128, 192, 255]; 
+      const drawColor = levelColors[targetLevel];
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        if (a === 0) continue;
+
+        // 人間の目に合わせた明るさ計算 (0〜255)
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+        
+        // 5段階（0〜4）に振り分け
+        const currentLevel = Math.min(4, Math.floor(brightness / 51));
+
+        if (currentLevel === targetLevel) {
+          // 指定した階調なら、その代表色で塗りつぶす（はっきり見えるように）
+          data[i] = drawColor; data[i+1] = drawColor; data[i+2] = drawColor;
+          data[i+3] = 255;
+        } else {
+          // それ以外の階調は透明にして見えなくする
+          data[i+3] = 0; 
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      refImage.src = canvas.toDataURL();
+    }
+
+    // 濃淡ボタンのクリックイベント
+    toneBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        toneBtns.forEach(b => b.classList.remove('active-tone'));
+        e.target.classList.add('active-tone');
+        applyToneFilter(e.target.dataset.tone);
+      });
+    });
+
 
     // --- カメラ処理 ---
     async function init() {
@@ -256,7 +326,6 @@
       await getCameras();
       navigator.mediaDevices.addEventListener('devicechange', getCameras);
     }
-
     async function getCameras() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -274,7 +343,6 @@
         if(externalId) await startCamera(externalId);
       } catch (err) { console.error(err); }
     }
-
     async function startCamera(deviceId = null, preferExt = false) {
       if (currentStream) currentStream.getTracks().forEach(t => t.stop());
       const constraints = { video: { width: { ideal: 1920 }, height: { ideal: 1080 } } };
@@ -286,18 +354,14 @@
       } catch (err) { if (preferExt) startCamera(null, false); }
     }
     cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
-
     function checkFocusCapabilities() {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
       const capabilities = track.getCapabilities ? track.getCapabilities() : {};
       if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
         focusLockBtn.disabled = false; focusLockBtn.textContent = '🔓 AFロック'; focusLockBtn.classList.remove('locked-btn'); isFocusLocked = false;
-      } else {
-        focusLockBtn.disabled = true; focusLockBtn.textContent = '未対応'; focusLockBtn.classList.remove('locked-btn');
-      }
+      } else { focusLockBtn.disabled = true; focusLockBtn.textContent = '未対応'; focusLockBtn.classList.remove('locked-btn'); }
     }
-
     focusLockBtn.addEventListener('click', async () => {
       if (!currentStream) return;
       const track = currentStream.getVideoTracks()[0];
@@ -314,37 +378,24 @@
       }
     });
 
-    // --- 画像操作のロック ---
+    // --- 画像操作 ---
     lockBtn.addEventListener('click', () => {
       isImageLocked = !isImageLocked;
       if (isImageLocked) {
         lockBtn.textContent = '🔒 解除'; lockBtn.classList.add('locked-btn');
         opacitySlider.disabled = true; scaleSlider.disabled = true; rotateBtn.disabled = true; flipBtn.disabled = true; navyBtn.disabled = true;
+        // 濃淡ボタンもロック
+        toneBtns.forEach(b => b.disabled = true);
         refImage.style.cursor = 'default'; workspace.style.cursor = 'grab'; 
       } else {
         lockBtn.textContent = '🔓 ロック'; lockBtn.classList.remove('locked-btn');
         opacitySlider.disabled = false; scaleSlider.disabled = false; rotateBtn.disabled = false; flipBtn.disabled = false; navyBtn.disabled = false;
+        toneBtns.forEach(b => b.disabled = false);
         refImage.style.cursor = 'move'; workspace.style.cursor = 'default';
       }
     });
-
-    imageInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          refImage.src = event.target.result; refImage.style.display = 'block';
-          toggleImageBtn.style.display = 'block'; isImageHidden = false;
-          toggleImageBtn.textContent = '👁️ 画像を隠す'; toggleImageBtn.classList.remove('image-hidden-state');
-          resetImageTransform();
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
     opacitySlider.addEventListener('input', (e) => { refImage.style.opacity = e.target.value / 100; });
 
-    // --- 画像単体の変形 ---
     let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1; let isNavy = false;
     function updateImageTransform() { refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`; }
     function resetImageTransform() {
@@ -361,7 +412,7 @@
       else { refImage.style.filter = 'none'; navyBtn.textContent = '🔵 白黒化'; navyBtn.classList.remove('active-filter-btn'); }
     });
 
-    // --- マウス＆タッチのドラッグ・ズーム処理 ---
+    // --- ドラッグ・ズーム ---
     let isDraggingImage = false, isDraggingGlobal = false;
     let startMouseX = 0, startMouseY = 0, startImgPosX = 0, startImgPosY = 0;
     let globalScale = 1, globalX = 0, globalY = 0, startGlobalX = 0, startGlobalY = 0;
@@ -374,8 +425,7 @@
     videoContainer.addEventListener('wheel', (e) => {
       if (!isImageLocked) return; e.preventDefault(); const zoomSpeed = 0.1;
       if (e.deltaY < 0) globalScale += zoomSpeed; else globalScale -= zoomSpeed;
-      globalScale = Math.max(1, Math.min(globalScale, 5));
-      if (globalScale === 1) { globalX = 0; globalY = 0; }
+      globalScale = Math.max(1, Math.min(globalScale, 5)); if (globalScale === 1) { globalX = 0; globalY = 0; }
       updateGlobalTransform();
     }, { passive: false });
 
@@ -412,7 +462,6 @@
 
     function endDrag() { isDraggingImage = false; isDraggingGlobal = false; initialPinchDistance = null; if (isImageLocked) workspace.style.cursor = 'grab'; }
     document.addEventListener('mouseup', endDrag); document.addEventListener('touchend', endDrag);
-
   </script>
 </body>
 </html>
