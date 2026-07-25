@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 確認ボタン追加版</title>
+  <title>カメラ・ルシダ アプリ - 製品版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,8 +21,49 @@
       height: 100vh;
       overflow: hidden; 
     }
+
+    /* ★パスワード画面のスタイル */
+    #password-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #222;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #password-screen h2 { margin-bottom: 20px; }
+    #password-screen p { margin-bottom: 10px; font-size: 14px; color: #ccc; }
+    #pass-input {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: none;
+      text-align: center;
+      width: 200px;
+    }
+    #login-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #5cb85c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #error-msg {
+      color: #d9534f;
+      margin-top: 15px;
+      display: none;
+      font-weight: bold;
+    }
     
-    /* 右上のメニュー再表示ボタン */
     #show-ui-btn {
       position: absolute;
       top: 15px;
@@ -38,7 +79,6 @@
       display: none;
     }
 
-    /* ★追加: 左下のお手本確認（トグル）ボタン */
     #toggle-image-btn {
       position: absolute;
       bottom: 20px;
@@ -52,9 +92,8 @@
       font-size: 14px;
       font-weight: bold;
       cursor: pointer;
-      display: none; /* 初期（画像がない時）は隠す */
+      display: none;
     }
-    /* 確認ボタンが「非表示中」の時の目立つデザイン */
     .image-hidden-state {
       background-color: #5cb85c !important;
       border-color: #4cae4c !important;
@@ -175,7 +214,15 @@
 </head>
 <body>
 
-  <!-- SVGフィルター（黒を濃紺にする） -->
+  <!-- ★パスワード入力画面 -->
+  <div id="password-screen">
+    <h2>カメラルシダ</h2>
+    <p>購入時にお渡ししたパスワードを入力してください</p>
+    <input type="password" id="pass-input" placeholder="パスワード">
+    <button id="login-btn">アプリを起動</button>
+    <p id="error-msg">パスワードが違います</p>
+  </div>
+
   <svg class="svg-filter-hide">
     <filter id="navy-tint">
       <feColorMatrix type="matrix" values="
@@ -187,18 +234,15 @@
     </filter>
   </svg>
 
-  <!-- フローティングボタン類 -->
   <button id="show-ui-btn">⚙️ メニューを表示</button>
-  <button id="toggle-image-btn">👁️ 画像を隠す</button> <!-- ★追加: 左下ボタン -->
+  <button id="toggle-image-btn">👁️ 画像を隠す</button> 
 
   <div id="controls">
-    <!-- 画像を開く -->
     <div class="control-group">
       <button id="custom-image-btn">🖼️ 画像</button>
       <input type="file" id="image-input" accept="image/*" style="display: none;">
     </div>
 
-    <!-- スライダー類 -->
     <div class="control-group">
       <label>透過:</label>
       <input type="range" id="opacity-slider" min="0" max="100" value="50">
@@ -206,25 +250,21 @@
       <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
     </div>
 
-    <!-- 変形・フィルター -->
     <div class="control-group">
       <button id="rotate-btn" title="90度回転">🔄</button>
       <button id="flip-btn" title="左右反転">↔</button>
       <button id="navy-btn">🔵 白黒化</button>
     </div>
 
-    <!-- その他の操作 -->
     <div class="control-group">
       <button id="lock-btn">🔓 ロック</button>
       <button id="camera-settings-btn">⚙️ カメラ</button>
     </div>
 
-    <!-- パネル非表示 -->
     <div class="control-group" style="margin-left: auto;">
       <button id="hide-ui-btn">👁️ 隠す</button>
     </div>
 
-    <!-- カメラ設定（隠しメニュー） -->
     <div class="control-group" id="camera-panel">
       <label for="camera-select">カメラ:</label>
       <select id="camera-select"><option value="">検索中...</option></select>
@@ -240,6 +280,29 @@
   </div>
 
   <script>
+    // --- パスワード機能の処理 ---
+    const passwordScreen = document.getElementById('password-screen');
+    const passInput = document.getElementById('pass-input');
+    const loginBtn = document.getElementById('login-btn');
+    const errorMsg = document.getElementById('error-msg');
+
+    const SECRET_PASSWORD = "camera2026"; 
+
+    loginBtn.addEventListener('click', () => {
+      if (passInput.value === SECRET_PASSWORD) {
+        passwordScreen.style.display = 'none';
+        init(); // ★パスワード正解時のみカメラ等の初期化を開始
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    // Enterキーでもログインできるようにする
+    passInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+
+    // --- 各種要素の取得 ---
     const videoElement = document.getElementById('camera-view');
     const cameraSelect = document.getElementById('camera-select');
     const imageInput = document.getElementById('image-input');
@@ -259,7 +322,7 @@
     
     const hideUiBtn = document.getElementById('hide-ui-btn');
     const showUiBtn = document.getElementById('show-ui-btn');
-    const toggleImageBtn = document.getElementById('toggle-image-btn'); // ★追加
+    const toggleImageBtn = document.getElementById('toggle-image-btn');
     
     const cameraSettingsBtn = document.getElementById('camera-settings-btn');
     const cameraPanel = document.getElementById('camera-panel');
@@ -267,7 +330,7 @@
     let currentStream = null;
     let isImageLocked = false;
     let isFocusLocked = false;
-    let isImageHidden = false; // ★追加: 画像が隠れているかどうかの状態
+    let isImageHidden = false;
 
     // --- メニュー表示・非表示 ---
     hideUiBtn.addEventListener('click', () => {
@@ -279,7 +342,6 @@
       showUiBtn.style.display = 'none';  
     });
 
-    // --- カメラ設定メニューの開閉 ---
     cameraSettingsBtn.addEventListener('click', () => {
       if (cameraPanel.style.display === 'none') {
         cameraPanel.style.display = 'flex';
@@ -290,28 +352,24 @@
       }
     });
 
-    // --- カスタム画像選択ボタン ---
     customImageBtn.addEventListener('click', () => {
       imageInput.click(); 
     });
 
-    // --- ★追加: 左下の画像確認（トグル）ボタン ---
     toggleImageBtn.addEventListener('click', () => {
       isImageHidden = !isImageHidden;
       if (isImageHidden) {
-        // 画像を一時的に消す
         refImage.style.display = 'none';
         toggleImageBtn.textContent = '🖼️ 画像を表示';
-        toggleImageBtn.classList.add('image-hidden-state'); // 緑色にして目立たせる
+        toggleImageBtn.classList.add('image-hidden-state');
       } else {
-        // 画像を元の状態で再表示
         refImage.style.display = 'block';
         toggleImageBtn.textContent = '👁️ 画像を隠す';
         toggleImageBtn.classList.remove('image-hidden-state');
       }
     });
 
-    // --- 1. カメラ処理 ---
+    // --- カメラ処理 ---
     async function init() {
       await startCamera(null, true);
       await getCameras();
@@ -391,7 +449,7 @@
       }
     });
 
-    // --- 2. 画像操作のロック ---
+    // --- 画像操作のロック ---
     lockBtn.addEventListener('click', () => {
       isImageLocked = !isImageLocked;
       if (isImageLocked) {
@@ -423,9 +481,8 @@
         const reader = new FileReader();
         reader.onload = (event) => {
           refImage.src = event.target.result;
-          refImage.style.display = 'block'; // 画像を表示
+          refImage.style.display = 'block';
           
-          // ★画像が読み込まれたら左下の確認ボタンを表示する
           toggleImageBtn.style.display = 'block';
           isImageHidden = false;
           toggleImageBtn.textContent = '👁️ 画像を隠す';
@@ -441,7 +498,7 @@
       refImage.style.opacity = e.target.value / 100;
     });
 
-    // --- 3. 画像単体の変形 ---
+    // --- 画像単体の変形 ---
     let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1;
     let isNavy = false;
 
@@ -489,7 +546,7 @@
       }
     });
 
-    // --- 4. マウス＆タッチのドラッグ・ズーム処理 ---
+    // --- マウス＆タッチのドラッグ・ズーム処理 ---
     let isDraggingImage = false;
     let isDraggingGlobal = false;
 
@@ -622,7 +679,7 @@
     document.addEventListener('mouseup', endDrag);
     document.addEventListener('touchend', endDrag);
 
-    init();
+    // ※ init() はパスワード入力成功時に呼び出されるため、ここからは削除しました
   </script>
 </body>
 </html>
