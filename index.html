@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 製品版</title>
+  <title>カメラ・ルシダ アプリ - 製品版/お試し版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,6 @@
       overflow: hidden; 
     }
 
-    /* ★パスワード画面のスタイル */
     #password-screen {
       position: absolute;
       top: 0;
@@ -37,7 +36,7 @@
       align-items: center;
     }
     #password-screen h2 { margin-bottom: 20px; }
-    #password-screen p { margin-bottom: 10px; font-size: 14px; color: #ccc; }
+    #password-screen p { margin-bottom: 10px; font-size: 14px; color: #ccc; text-align: center; line-height: 1.5; }
     #pass-input {
       padding: 10px;
       font-size: 16px;
@@ -45,7 +44,7 @@
       border-radius: 5px;
       border: none;
       text-align: center;
-      width: 200px;
+      width: 220px;
     }
     #login-btn {
       padding: 10px 20px;
@@ -62,175 +61,45 @@
       margin-top: 15px;
       display: none;
       font-weight: bold;
+      text-align: center;
+      padding: 0 20px;
     }
     
-    #show-ui-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      z-index: 100;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: white;
-      border: 1px solid #777;
-      padding: 10px 15px;
-      border-radius: 5px;
-      font-size: 14px;
-      cursor: pointer;
-      display: none;
-    }
-
-    #toggle-image-btn {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      z-index: 100;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: white;
-      border: 1px solid #777;
-      padding: 12px 15px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      display: none;
-    }
-    .image-hidden-state {
-      background-color: #5cb85c !important;
-      border-color: #4cae4c !important;
-    }
-
-    #controls {
-      padding: 8px; 
-      background-color: #222;
-      display: flex;
-      gap: 6px; 
-      align-items: center;
-      flex-wrap: wrap; 
-      border-bottom: 1px solid #444;
-      z-index: 10; 
-      max-height: 50vh; 
-      overflow-y: auto; 
-    }
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: #444;
-      padding: 4px 8px;
-      border-radius: 5px;
-      flex-wrap: wrap; 
-      font-size: 13px; 
-    }
-    
-    #hide-ui-btn {
-      background-color: #5cb85c;
-      color: white;
-      font-weight: bold;
-    }
-
-    #video-container {
-      flex-grow: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden; 
-      position: relative;
-      background-color: #000;
-      touch-action: none;
-    }
-    #workspace {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: absolute;
-      transform-origin: center center;
-    }
-    video {
-      max-width: 100%;
-      max-height: 100%;
-      z-index: 1;
-    }
-    #reference-image {
-      position: absolute;
-      max-width: 100%;
-      max-height: 100%;
-      z-index: 2;
-      opacity: 0.5;
-      display: none;
-      cursor: move;
-      user-select: none;
-      touch-action: none; 
-      pointer-events: auto; 
-    }
-    
-    select, button {
-      padding: 5px 8px;
-      font-size: 13px;
-      cursor: pointer;
-      border: none;
-      border-radius: 3px;
-      background-color: #eee;
-      color: #333;
-    }
-    button:disabled, input[type="range"]:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    input[type="range"] {
-      width: 70px;
-    }
-
-    .locked-btn {
-      background-color: #d9534f !important;
-      color: white !important;
-    }
-    #focus-lock-btn {
-      background-color: #5bc0de;
-      color: white;
-    }
-    #focus-lock-btn.locked-btn {
-      background-color: #f0ad4e !important;
-    }
-    .active-filter-btn {
-      background-color: #3b5998 !important;
-      color: white !important;
-    }
-    
-    .svg-filter-hide {
-      position: absolute;
-      width: 0; height: 0; pointer-events: none;
-    }
-
-    #camera-panel {
-      flex-basis: 100%; 
-      display: none; 
-      background-color: #333;
-      margin-top: 2px;
-    }
+    #show-ui-btn { position: absolute; top: 15px; right: 15px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 10px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
+    #toggle-image-btn { position: absolute; bottom: 20px; left: 20px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 12px 15px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: none; }
+    .image-hidden-state { background-color: #5cb85c !important; border-color: #4cae4c !important; }
+    #controls { padding: 8px; background-color: #222; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #444; z-index: 10; max-height: 50vh; overflow-y: auto; }
+    .control-group { display: flex; align-items: center; gap: 5px; background: #444; padding: 4px 8px; border-radius: 5px; flex-wrap: wrap; font-size: 13px; }
+    #hide-ui-btn { background-color: #5cb85c; color: white; font-weight: bold; }
+    #video-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; background-color: #000; touch-action: none; }
+    #workspace { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: absolute; transform-origin: center center; }
+    video { max-width: 100%; max-height: 100%; z-index: 1; }
+    #reference-image { position: absolute; max-width: 100%; max-height: 100%; z-index: 2; opacity: 0.5; display: none; cursor: move; user-select: none; touch-action: none; pointer-events: auto; }
+    select, button { padding: 5px 8px; font-size: 13px; cursor: pointer; border: none; border-radius: 3px; background-color: #eee; color: #333; }
+    button:disabled, input[type="range"]:disabled { opacity: 0.5; cursor: not-allowed; }
+    input[type="range"] { width: 70px; }
+    .locked-btn { background-color: #d9534f !important; color: white !important; }
+    #focus-lock-btn { background-color: #5bc0de; color: white; }
+    #focus-lock-btn.locked-btn { background-color: #f0ad4e !important; }
+    .active-filter-btn { background-color: #3b5998 !important; color: white !important; }
+    .svg-filter-hide { position: absolute; width: 0; height: 0; pointer-events: none; }
+    #camera-panel { flex-basis: 100%; display: none; background-color: #333; margin-top: 2px; }
   </style>
 </head>
 <body>
 
-  <!-- ★パスワード入力画面 -->
+  <!-- パスワード入力画面 -->
   <div id="password-screen">
     <h2>カメラルシダ</h2>
-    <p>購入時にお渡ししたパスワードを入力してください</p>
-    <input type="password" id="pass-input" placeholder="パスワード">
+    <p>製品版パスワード、または<br>お試し用パスワードを入力してください</p>
+    <input type="password" id="pass-input" placeholder="パスワードを入力">
     <button id="login-btn">アプリを起動</button>
     <p id="error-msg">パスワードが違います</p>
   </div>
 
   <svg class="svg-filter-hide">
     <filter id="navy-tint">
-      <feColorMatrix type="matrix" values="
-        0.33 0.33 0.33 0 0
-        0.33 0.33 0.33 0 0.15
-        0.33 0.33 0.33 0 0.5
-        0    0    0    1 0
-      " />
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0.15 0.33 0.33 0.33 0 0.5 0 0 0 1 0" />
     </filter>
   </svg>
 
@@ -242,32 +111,24 @@
       <button id="custom-image-btn">🖼️ 画像</button>
       <input type="file" id="image-input" accept="image/*" style="display: none;">
     </div>
-
     <div class="control-group">
-      <label>透過:</label>
-      <input type="range" id="opacity-slider" min="0" max="100" value="50">
-      <label>サイズ:</label>
-      <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
+      <label>透過:</label><input type="range" id="opacity-slider" min="0" max="100" value="50">
+      <label>サイズ:</label><input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
     </div>
-
     <div class="control-group">
       <button id="rotate-btn" title="90度回転">🔄</button>
       <button id="flip-btn" title="左右反転">↔</button>
       <button id="navy-btn">🔵 白黒化</button>
     </div>
-
     <div class="control-group">
       <button id="lock-btn">🔓 ロック</button>
       <button id="camera-settings-btn">⚙️ カメラ</button>
     </div>
-
     <div class="control-group" style="margin-left: auto;">
       <button id="hide-ui-btn">👁️ 隠す</button>
     </div>
-
     <div class="control-group" id="camera-panel">
-      <label for="camera-select">カメラ:</label>
-      <select id="camera-select"><option value="">検索中...</option></select>
+      <label for="camera-select">カメラ:</label><select id="camera-select"><option value="">検索中...</option></select>
       <button id="focus-lock-btn" disabled>AFロック</button>
     </div>
   </div>
@@ -280,29 +141,65 @@
   </div>
 
   <script>
-    // --- パスワード機能の処理 ---
+    // --- パスワードとお試し版の処理 ---
     const passwordScreen = document.getElementById('password-screen');
     const passInput = document.getElementById('pass-input');
     const loginBtn = document.getElementById('login-btn');
     const errorMsg = document.getElementById('error-msg');
 
-    const SECRET_PASSWORD = "camera2026"; 
+    // ★パスワードの設定
+    const SECRET_PASSWORD = "camera2026"; // 製品版（無制限）
+    const TRIAL_PASSWORD = "trial";       // お試し版（7日間限定）
+    const TRIAL_DAYS = 7;                 // お試し期間の日数
 
     loginBtn.addEventListener('click', () => {
-      if (passInput.value === SECRET_PASSWORD) {
+      const inputVal = passInput.value;
+
+      if (inputVal === SECRET_PASSWORD) {
+        // ① 製品版パスワードの場合：無条件で通過
         passwordScreen.style.display = 'none';
-        init(); // ★パスワード正解時のみカメラ等の初期化を開始
-      } else {
+        init(); 
+      } 
+      else if (inputVal === TRIAL_PASSWORD) {
+        // ② お試し版パスワードの場合：日数をチェック
+        const now = new Date().getTime();
+        let trialStart = localStorage.getItem('cameraLucidaTrialStart');
+
+        if (!trialStart) {
+          // 初回ログイン時：現在の日時を保存
+          localStorage.setItem('cameraLucidaTrialStart', now);
+          alert("お試し版を開始します。\n本日から7日間利用可能です。");
+          passwordScreen.style.display = 'none';
+          init();
+        } else {
+          // 2回目以降：経過日数を計算
+          const diffTime = now - parseInt(trialStart);
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          const leftDays = TRIAL_DAYS - diffDays;
+
+          if (leftDays > 0) {
+            alert(`お試し期間中です。\n（残り ${leftDays} 日）`);
+            passwordScreen.style.display = 'none';
+            init();
+          } else {
+            // 期限切れ
+            errorMsg.innerHTML = "お試し期間（7日間）が終了しました。<br>引き続きご利用になるには製品版をご購入ください。";
+            errorMsg.style.display = 'block';
+          }
+        }
+      } 
+      else {
+        // ③ パスワード間違い
+        errorMsg.textContent = "パスワードが違います";
         errorMsg.style.display = 'block';
       }
     });
 
-    // Enterキーでもログインできるようにする
     passInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') loginBtn.click();
     });
 
-    // --- 各種要素の取得 ---
+    // --- 各種要素の取得とUI処理 ---
     const videoElement = document.getElementById('camera-view');
     const cameraSelect = document.getElementById('camera-select');
     const imageInput = document.getElementById('image-input');
@@ -323,7 +220,6 @@
     const hideUiBtn = document.getElementById('hide-ui-btn');
     const showUiBtn = document.getElementById('show-ui-btn');
     const toggleImageBtn = document.getElementById('toggle-image-btn');
-    
     const cameraSettingsBtn = document.getElementById('camera-settings-btn');
     const cameraPanel = document.getElementById('camera-panel');
 
@@ -332,40 +228,25 @@
     let isFocusLocked = false;
     let isImageHidden = false;
 
-    // --- メニュー表示・非表示 ---
-    hideUiBtn.addEventListener('click', () => {
-      controlsDiv.style.display = 'none';
-      showUiBtn.style.display = 'block'; 
-    });
-    showUiBtn.addEventListener('click', () => {
-      controlsDiv.style.display = 'flex';
-      showUiBtn.style.display = 'none';  
-    });
+    hideUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'none'; showUiBtn.style.display = 'block'; });
+    showUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'flex'; showUiBtn.style.display = 'none'; });
 
     cameraSettingsBtn.addEventListener('click', () => {
       if (cameraPanel.style.display === 'none') {
-        cameraPanel.style.display = 'flex';
-        cameraSettingsBtn.classList.add('active-filter-btn');
+        cameraPanel.style.display = 'flex'; cameraSettingsBtn.classList.add('active-filter-btn');
       } else {
-        cameraPanel.style.display = 'none';
-        cameraSettingsBtn.classList.remove('active-filter-btn');
+        cameraPanel.style.display = 'none'; cameraSettingsBtn.classList.remove('active-filter-btn');
       }
     });
 
-    customImageBtn.addEventListener('click', () => {
-      imageInput.click(); 
-    });
+    customImageBtn.addEventListener('click', () => { imageInput.click(); });
 
     toggleImageBtn.addEventListener('click', () => {
       isImageHidden = !isImageHidden;
       if (isImageHidden) {
-        refImage.style.display = 'none';
-        toggleImageBtn.textContent = '🖼️ 画像を表示';
-        toggleImageBtn.classList.add('image-hidden-state');
+        refImage.style.display = 'none'; toggleImageBtn.textContent = '🖼️ 画像を表示'; toggleImageBtn.classList.add('image-hidden-state');
       } else {
-        refImage.style.display = 'block';
-        toggleImageBtn.textContent = '👁️ 画像を隠す';
-        toggleImageBtn.classList.remove('image-hidden-state');
+        refImage.style.display = 'block'; toggleImageBtn.textContent = '👁️ 画像を隠す'; toggleImageBtn.classList.remove('image-hidden-state');
       }
     });
 
@@ -384,9 +265,7 @@
         if (videoDevices.length === 0) return cameraSelect.innerHTML = '<option>カメラなし</option>';
         let externalId = null;
         videoDevices.forEach((d, i) => {
-          const opt = document.createElement('option');
-          opt.value = d.deviceId;
-          opt.text = d.label || `カメラ ${i + 1}`;
+          const opt = document.createElement('option'); opt.value = d.deviceId; opt.text = d.label || `カメラ ${i + 1}`;
           cameraSelect.appendChild(opt);
           if (opt.text.toLowerCase().includes('usb') || opt.text.toLowerCase().includes('external')) externalId = d.deviceId;
         });
@@ -403,11 +282,8 @@
       else if (preferExt) constraints.video.facingMode = { ideal: "environment" };
       try {
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-        videoElement.srcObject = currentStream;
-        checkFocusCapabilities();
-      } catch (err) {
-        if (preferExt) startCamera(null, false);
-      }
+        videoElement.srcObject = currentStream; checkFocusCapabilities();
+      } catch (err) { if (preferExt) startCamera(null, false); }
     }
     cameraSelect.addEventListener('change', () => startCamera(cameraSelect.value));
 
@@ -416,14 +292,9 @@
       const track = currentStream.getVideoTracks()[0];
       const capabilities = track.getCapabilities ? track.getCapabilities() : {};
       if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
-        focusLockBtn.disabled = false;
-        focusLockBtn.textContent = '🔓 AFロック';
-        focusLockBtn.classList.remove('locked-btn');
-        isFocusLocked = false;
+        focusLockBtn.disabled = false; focusLockBtn.textContent = '🔓 AFロック'; focusLockBtn.classList.remove('locked-btn'); isFocusLocked = false;
       } else {
-        focusLockBtn.disabled = true;
-        focusLockBtn.textContent = '未対応';
-        focusLockBtn.classList.remove('locked-btn');
+        focusLockBtn.disabled = true; focusLockBtn.textContent = '未対応'; focusLockBtn.classList.remove('locked-btn');
       }
     }
 
@@ -434,18 +305,12 @@
         try {
           if (!isFocusLocked) {
             await track.applyConstraints({ advanced: [{ focusMode: "manual" }] });
-            isFocusLocked = true;
-            focusLockBtn.textContent = '🔒 ピント固定';
-            focusLockBtn.classList.add('locked-btn');
+            isFocusLocked = true; focusLockBtn.textContent = '🔒 ピント固定'; focusLockBtn.classList.add('locked-btn');
           } else {
             await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
-            isFocusLocked = false;
-            focusLockBtn.textContent = '🔓 AFロック';
-            focusLockBtn.classList.remove('locked-btn');
+            isFocusLocked = false; focusLockBtn.textContent = '🔓 AFロック'; focusLockBtn.classList.remove('locked-btn');
           }
-        } catch (err) {
-          console.error(err);
-        }
+        } catch (err) { console.error(err); }
       }
     });
 
@@ -453,25 +318,13 @@
     lockBtn.addEventListener('click', () => {
       isImageLocked = !isImageLocked;
       if (isImageLocked) {
-        lockBtn.textContent = '🔒 解除';
-        lockBtn.classList.add('locked-btn');
-        opacitySlider.disabled = true;
-        scaleSlider.disabled = true;
-        rotateBtn.disabled = true;
-        flipBtn.disabled = true;
-        navyBtn.disabled = true;
-        refImage.style.cursor = 'default';
-        workspace.style.cursor = 'grab'; 
+        lockBtn.textContent = '🔒 解除'; lockBtn.classList.add('locked-btn');
+        opacitySlider.disabled = true; scaleSlider.disabled = true; rotateBtn.disabled = true; flipBtn.disabled = true; navyBtn.disabled = true;
+        refImage.style.cursor = 'default'; workspace.style.cursor = 'grab'; 
       } else {
-        lockBtn.textContent = '🔓 ロック';
-        lockBtn.classList.remove('locked-btn');
-        opacitySlider.disabled = false;
-        scaleSlider.disabled = false;
-        rotateBtn.disabled = false;
-        flipBtn.disabled = false;
-        navyBtn.disabled = false;
-        refImage.style.cursor = 'move';
-        workspace.style.cursor = 'default';
+        lockBtn.textContent = '🔓 ロック'; lockBtn.classList.remove('locked-btn');
+        opacitySlider.disabled = false; scaleSlider.disabled = false; rotateBtn.disabled = false; flipBtn.disabled = false; navyBtn.disabled = false;
+        refImage.style.cursor = 'move'; workspace.style.cursor = 'default';
       }
     });
 
@@ -480,206 +333,86 @@
       if (file) {
         const reader = new FileReader();
         reader.onload = (event) => {
-          refImage.src = event.target.result;
-          refImage.style.display = 'block';
-          
-          toggleImageBtn.style.display = 'block';
-          isImageHidden = false;
-          toggleImageBtn.textContent = '👁️ 画像を隠す';
-          toggleImageBtn.classList.remove('image-hidden-state');
-          
+          refImage.src = event.target.result; refImage.style.display = 'block';
+          toggleImageBtn.style.display = 'block'; isImageHidden = false;
+          toggleImageBtn.textContent = '👁️ 画像を隠す'; toggleImageBtn.classList.remove('image-hidden-state');
           resetImageTransform();
         };
         reader.readAsDataURL(file);
       }
     });
 
-    opacitySlider.addEventListener('input', (e) => {
-      refImage.style.opacity = e.target.value / 100;
-    });
+    opacitySlider.addEventListener('input', (e) => { refImage.style.opacity = e.target.value / 100; });
 
     // --- 画像単体の変形 ---
-    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1;
-    let isNavy = false;
-
-    function updateImageTransform() {
-      refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`;
-    }
-    
+    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1; let isNavy = false;
+    function updateImageTransform() { refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`; }
     function resetImageTransform() {
-      imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0; imgFlipX = 1;
-      scaleSlider.value = 1;
-      
-      isNavy = false;
-      refImage.style.filter = 'none';
-      navyBtn.textContent = '🔵 白黒化';
-      navyBtn.classList.remove('active-filter-btn');
-      
+      imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0; imgFlipX = 1; scaleSlider.value = 1;
+      isNavy = false; refImage.style.filter = 'none'; navyBtn.textContent = '🔵 白黒化'; navyBtn.classList.remove('active-filter-btn');
       updateImageTransform();
     }
-
-    scaleSlider.addEventListener('input', (e) => {
-      imgScale = parseFloat(e.target.value);
-      updateImageTransform();
-    });
-
-    rotateBtn.addEventListener('click', () => {
-      imgRotate -= 90;
-      updateImageTransform();
-    });
-
-    flipBtn.addEventListener('click', () => {
-      imgFlipX *= -1; 
-      updateImageTransform();
-    });
-
+    scaleSlider.addEventListener('input', (e) => { imgScale = parseFloat(e.target.value); updateImageTransform(); });
+    rotateBtn.addEventListener('click', () => { imgRotate -= 90; updateImageTransform(); });
+    flipBtn.addEventListener('click', () => { imgFlipX *= -1; updateImageTransform(); });
     navyBtn.addEventListener('click', () => {
       isNavy = !isNavy;
-      if (isNavy) {
-        refImage.style.filter = 'url(#navy-tint)';
-        navyBtn.textContent = '🎨 カラー';
-        navyBtn.classList.add('active-filter-btn');
-      } else {
-        refImage.style.filter = 'none';
-        navyBtn.textContent = '🔵 白黒化';
-        navyBtn.classList.remove('active-filter-btn');
-      }
+      if (isNavy) { refImage.style.filter = 'url(#navy-tint)'; navyBtn.textContent = '🎨 カラー'; navyBtn.classList.add('active-filter-btn'); } 
+      else { refImage.style.filter = 'none'; navyBtn.textContent = '🔵 白黒化'; navyBtn.classList.remove('active-filter-btn'); }
     });
 
     // --- マウス＆タッチのドラッグ・ズーム処理 ---
-    let isDraggingImage = false;
-    let isDraggingGlobal = false;
+    let isDraggingImage = false, isDraggingGlobal = false;
+    let startMouseX = 0, startMouseY = 0, startImgPosX = 0, startImgPosY = 0;
+    let globalScale = 1, globalX = 0, globalY = 0, startGlobalX = 0, startGlobalY = 0;
+    let initialPinchDistance = null, initialGlobalScale = 1;
 
-    let startMouseX = 0, startMouseY = 0;
-    let startImgPosX = 0, startImgPosY = 0;
-    
-    let globalScale = 1;
-    let globalX = 0, globalY = 0;
-    let startGlobalX = 0, startGlobalY = 0;
-    let initialPinchDistance = null;
-    let initialGlobalScale = 1;
+    function updateGlobalTransform() { workspace.style.transform = `translate(${globalX}px, ${globalY}px) scale(${globalScale})`; }
+    function resetGlobalZoom() { globalScale = 1; globalX = 0; globalY = 0; updateGlobalTransform(); }
 
-    function updateGlobalTransform() {
-      workspace.style.transform = `translate(${globalX}px, ${globalY}px) scale(${globalScale})`;
-    }
-    function resetGlobalZoom() {
-      globalScale = 1; globalX = 0; globalY = 0;
-      updateGlobalTransform();
-    }
-
-    videoContainer.addEventListener('dblclick', () => {
-      if (isImageLocked) resetGlobalZoom();
-    });
+    videoContainer.addEventListener('dblclick', () => { if (isImageLocked) resetGlobalZoom(); });
     videoContainer.addEventListener('wheel', (e) => {
-      if (!isImageLocked) return;
-      e.preventDefault();
-      const zoomSpeed = 0.1;
-      if (e.deltaY < 0) globalScale += zoomSpeed;
-      else globalScale -= zoomSpeed;
+      if (!isImageLocked) return; e.preventDefault(); const zoomSpeed = 0.1;
+      if (e.deltaY < 0) globalScale += zoomSpeed; else globalScale -= zoomSpeed;
       globalScale = Math.max(1, Math.min(globalScale, 5));
       if (globalScale === 1) { globalX = 0; globalY = 0; }
       updateGlobalTransform();
     }, { passive: false });
 
     function startImageDrag(clientX, clientY) {
-      if (isImageLocked) return;
-      isDraggingImage = true;
-      startMouseX = clientX;
-      startMouseY = clientY;
-      startImgPosX = imgPosX;
-      startImgPosY = imgPosY;
+      if (isImageLocked) return; isDraggingImage = true;
+      startMouseX = clientX; startMouseY = clientY; startImgPosX = imgPosX; startImgPosY = imgPosY;
     }
-
-    refImage.addEventListener('mousedown', (e) => {
-      startImageDrag(e.clientX, e.clientY);
-      e.preventDefault();
-      e.stopPropagation(); 
-    });
-
-    refImage.addEventListener('touchstart', (e) => {
-      if (isImageLocked) return;
-      if (e.touches.length === 1) { 
-        startImageDrag(e.touches[0].clientX, e.touches[0].clientY);
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, { passive: false });
+    refImage.addEventListener('mousedown', (e) => { startImageDrag(e.clientX, e.clientY); e.preventDefault(); e.stopPropagation(); });
+    refImage.addEventListener('touchstart', (e) => { if (isImageLocked) return; if (e.touches.length === 1) { startImageDrag(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); e.stopPropagation(); } }, { passive: false });
 
     function startGlobalDrag(clientX, clientY) {
-      if (!isImageLocked) return;
-      isDraggingGlobal = true;
-      startMouseX = clientX;
-      startMouseY = clientY;
-      startGlobalX = globalX;
-      startGlobalY = globalY;
-      workspace.style.cursor = 'grabbing';
+      if (!isImageLocked) return; isDraggingGlobal = true;
+      startMouseX = clientX; startMouseY = clientY; startGlobalX = globalX; startGlobalY = globalY; workspace.style.cursor = 'grabbing';
     }
-
-    workspace.addEventListener('mousedown', (e) => {
-      startGlobalDrag(e.clientX, e.clientY);
-      e.preventDefault();
-    });
-
+    workspace.addEventListener('mousedown', (e) => { startGlobalDrag(e.clientX, e.clientY); e.preventDefault(); });
     workspace.addEventListener('touchstart', (e) => {
       if (!isImageLocked) return;
-      if (e.touches.length === 2) {
-        initialPinchDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        initialGlobalScale = globalScale;
-        e.preventDefault();
-      } else if (e.touches.length === 1) {
-        startGlobalDrag(e.touches[0].clientX, e.touches[0].clientY);
-        e.preventDefault();
-      }
+      if (e.touches.length === 2) { initialPinchDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); initialGlobalScale = globalScale; e.preventDefault(); } 
+      else if (e.touches.length === 1) { startGlobalDrag(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }
     }, { passive: false });
 
     function handleMove(clientX, clientY) {
-      if (isDraggingImage) {
-        imgPosX = startImgPosX + (clientX - startMouseX);
-        imgPosY = startImgPosY + (clientY - startMouseY);
-        updateImageTransform();
-      } else if (isDraggingGlobal) {
-        globalX = startGlobalX + (clientX - startMouseX);
-        globalY = startGlobalY + (clientY - startMouseY);
-        updateGlobalTransform();
-      }
+      if (isDraggingImage) { imgPosX = startImgPosX + (clientX - startMouseX); imgPosY = startImgPosY + (clientY - startMouseY); updateImageTransform(); } 
+      else if (isDraggingGlobal) { globalX = startGlobalX + (clientX - startMouseX); globalY = startGlobalY + (clientY - startMouseY); updateGlobalTransform(); }
     }
-
-    document.addEventListener('mousemove', (e) => {
-      if (isDraggingImage || isDraggingGlobal) {
-        handleMove(e.clientX, e.clientY);
-      }
-    });
-
+    document.addEventListener('mousemove', (e) => { if (isDraggingImage || isDraggingGlobal) { handleMove(e.clientX, e.clientY); } });
     document.addEventListener('touchmove', (e) => {
-      if (isDraggingImage || isDraggingGlobal) {
-        handleMove(e.touches[0].clientX, e.touches[0].clientY);
-        e.preventDefault(); 
-      } else if (isImageLocked && e.touches.length === 2 && initialPinchDistance) {
-        const currentDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        globalScale = initialGlobalScale * (currentDistance / initialPinchDistance);
-        globalScale = Math.max(1, Math.min(globalScale, 5));
-        updateGlobalTransform();
-        e.preventDefault();
+      if (isDraggingImage || isDraggingGlobal) { handleMove(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } 
+      else if (isImageLocked && e.touches.length === 2 && initialPinchDistance) {
+        const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        globalScale = initialGlobalScale * (currentDistance / initialPinchDistance); globalScale = Math.max(1, Math.min(globalScale, 5)); updateGlobalTransform(); e.preventDefault();
       }
     }, { passive: false });
 
-    function endDrag() {
-      isDraggingImage = false;
-      isDraggingGlobal = false;
-      initialPinchDistance = null;
-      if (isImageLocked) workspace.style.cursor = 'grab';
-    }
+    function endDrag() { isDraggingImage = false; isDraggingGlobal = false; initialPinchDistance = null; if (isImageLocked) workspace.style.cursor = 'grab'; }
+    document.addEventListener('mouseup', endDrag); document.addEventListener('touchend', endDrag);
 
-    document.addEventListener('mouseup', endDrag);
-    document.addEventListener('touchend', endDrag);
-
-    // ※ init() はパスワード入力成功時に呼び出されるため、ここからは削除しました
   </script>
 </body>
 </html>
