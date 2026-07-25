@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 超コンパクト版</title>
+  <title>カメラ・ルシダ アプリ - 確認ボタン追加版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,6 +22,7 @@
       overflow: hidden; 
     }
     
+    /* 右上のメニュー再表示ボタン */
     #show-ui-btn {
       position: absolute;
       top: 15px;
@@ -37,11 +38,33 @@
       display: none;
     }
 
+    /* ★追加: 左下のお手本確認（トグル）ボタン */
+    #toggle-image-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 100;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: 1px solid #777;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      display: none; /* 初期（画像がない時）は隠す */
+    }
+    /* 確認ボタンが「非表示中」の時の目立つデザイン */
+    .image-hidden-state {
+      background-color: #5cb85c !important;
+      border-color: #4cae4c !important;
+    }
+
     #controls {
-      padding: 8px; /* パディングを少し狭く */
+      padding: 8px; 
       background-color: #222;
       display: flex;
-      gap: 6px; /* 隙間を狭く */
+      gap: 6px; 
       align-items: center;
       flex-wrap: wrap; 
       border-bottom: 1px solid #444;
@@ -57,7 +80,7 @@
       padding: 4px 8px;
       border-radius: 5px;
       flex-wrap: wrap; 
-      font-size: 13px; /* フォントを少し小さく */
+      font-size: 13px; 
     }
     
     #hide-ui-btn {
@@ -117,7 +140,6 @@
       cursor: not-allowed;
     }
     
-    /* スライダーを短く制限 */
     input[type="range"] {
       width: 70px;
     }
@@ -143,10 +165,9 @@
       width: 0; height: 0; pointer-events: none;
     }
 
-    /* カメラ設定パネル用 */
     #camera-panel {
-      flex-basis: 100%; /* 横幅いっぱいに広げる */
-      display: none; /* 初期は隠す */
+      flex-basis: 100%; 
+      display: none; 
       background-color: #333;
       margin-top: 2px;
     }
@@ -166,10 +187,12 @@
     </filter>
   </svg>
 
+  <!-- フローティングボタン類 -->
   <button id="show-ui-btn">⚙️ メニューを表示</button>
+  <button id="toggle-image-btn">👁️ 画像を隠す</button> <!-- ★追加: 左下ボタン -->
 
   <div id="controls">
-    <!-- 画像を開く (コンパクト版) -->
+    <!-- 画像を開く -->
     <div class="control-group">
       <button id="custom-image-btn">🖼️ 画像</button>
       <input type="file" id="image-input" accept="image/*" style="display: none;">
@@ -183,7 +206,7 @@
       <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
     </div>
 
-    <!-- 変形・フィルター（アイコン中心） -->
+    <!-- 変形・フィルター -->
     <div class="control-group">
       <button id="rotate-btn" title="90度回転">🔄</button>
       <button id="flip-btn" title="左右反転">↔</button>
@@ -236,6 +259,7 @@
     
     const hideUiBtn = document.getElementById('hide-ui-btn');
     const showUiBtn = document.getElementById('show-ui-btn');
+    const toggleImageBtn = document.getElementById('toggle-image-btn'); // ★追加
     
     const cameraSettingsBtn = document.getElementById('camera-settings-btn');
     const cameraPanel = document.getElementById('camera-panel');
@@ -243,6 +267,7 @@
     let currentStream = null;
     let isImageLocked = false;
     let isFocusLocked = false;
+    let isImageHidden = false; // ★追加: 画像が隠れているかどうかの状態
 
     // --- メニュー表示・非表示 ---
     hideUiBtn.addEventListener('click', () => {
@@ -267,7 +292,23 @@
 
     // --- カスタム画像選択ボタン ---
     customImageBtn.addEventListener('click', () => {
-      imageInput.click(); // 隠した本来のボタンを自動クリック
+      imageInput.click(); 
+    });
+
+    // --- ★追加: 左下の画像確認（トグル）ボタン ---
+    toggleImageBtn.addEventListener('click', () => {
+      isImageHidden = !isImageHidden;
+      if (isImageHidden) {
+        // 画像を一時的に消す
+        refImage.style.display = 'none';
+        toggleImageBtn.textContent = '🖼️ 画像を表示';
+        toggleImageBtn.classList.add('image-hidden-state'); // 緑色にして目立たせる
+      } else {
+        // 画像を元の状態で再表示
+        refImage.style.display = 'block';
+        toggleImageBtn.textContent = '👁️ 画像を隠す';
+        toggleImageBtn.classList.remove('image-hidden-state');
+      }
     });
 
     // --- 1. カメラ処理 ---
@@ -382,7 +423,14 @@
         const reader = new FileReader();
         reader.onload = (event) => {
           refImage.src = event.target.result;
-          refImage.style.display = 'block';
+          refImage.style.display = 'block'; // 画像を表示
+          
+          // ★画像が読み込まれたら左下の確認ボタンを表示する
+          toggleImageBtn.style.display = 'block';
+          isImageHidden = false;
+          toggleImageBtn.textContent = '👁️ 画像を隠す';
+          toggleImageBtn.classList.remove('image-hidden-state');
+          
           resetImageTransform();
         };
         reader.readAsDataURL(file);
