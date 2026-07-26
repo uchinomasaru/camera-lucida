@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - レッド抽出・UI改善版</title>
+  <title>カメラ・ルシダ アプリ - 不具合修正版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +40,7 @@
     /* フローティングボタン（上部メニュー表示） */
     #show-ui-btn { position: absolute; top: 15px; right: 15px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 10px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
     
-    /* ★変更：画像ON/OFFボタン（左下） */
+    /* 画像ON/OFFボタン（左下） */
     #toggle-image-btn { 
       position: absolute; bottom: 20px; left: 10px; z-index: 100; 
       background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; 
@@ -49,7 +49,7 @@
     }
     .image-hidden-state { background-color: #5cb85c !important; border-color: #4cae4c !important; }
     
-    /* ★変更：濃淡パレット用デザイン（右下フローティング） */
+    /* 濃淡パレット（右下・非表示の対象外） */
     #tone-controls {
       position: absolute; bottom: 20px; right: 10px; z-index: 100; 
       background-color: rgba(0, 0, 0, 0.6); border: 1px solid #777;
@@ -107,13 +107,12 @@
 
   <button id="show-ui-btn">⚙️ メニューを表示</button>
   
-  <!-- ★常時表示エリア（画面最下部） -->
+  <!-- 常時表示エリア（画面最下部） -->
   <button id="toggle-image-btn">👁️ 隠す</button> 
   
   <div id="tone-controls">
     <span style="font-size:11px; color:#ddd; margin-right:2px;">抽出:</span>
     <button class="tone-btn active-tone" data-tone="all" style="background:#eee; color:#333; width:30px;">全</button>
-    <!-- ボタンの見た目は元の濃さを表し、抽出結果は赤になります -->
     <button class="tone-btn" data-tone="0" style="background:#000; color:#fff;" title="一番暗い影">1</button>
     <button class="tone-btn" data-tone="1" style="background:#404040; color:#fff;">2</button>
     <button class="tone-btn" data-tone="2" style="background:#808080; color:#fff;">3</button>
@@ -127,27 +126,22 @@
       <button id="custom-image-btn">🖼️ 画像</button>
       <input type="file" id="image-input" accept="image/*" style="display: none;">
     </div>
-    
     <div class="control-group">
       <label>透過:</label><input type="range" id="opacity-slider" min="0" max="100" value="50">
       <label>サイズ:</label><input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
     </div>
-    
     <div class="control-group">
       <button id="rotate-btn" title="90度回転">🔄</button>
       <button id="flip-btn" title="左右反転">↔</button>
       <button id="navy-btn">🔵 白黒化</button>
     </div>
-    
     <div class="control-group">
       <button id="lock-btn">🔓 ロック</button>
       <button id="camera-settings-btn">⚙️ カメラ</button>
     </div>
-    
     <div class="control-group" style="margin-left: auto;">
       <button id="hide-ui-btn">👁️ メニューを隠す</button>
     </div>
-    
     <div class="control-group" id="camera-panel">
       <label for="camera-select">カメラ:</label><select id="camera-select"><option value="">検索中...</option></select>
       <button id="focus-lock-btn" disabled>AFロック</button>
@@ -249,7 +243,7 @@
       else { refImage.style.display = 'block'; toggleImageBtn.textContent = '👁️ 隠す'; toggleImageBtn.classList.remove('image-hidden-state'); }
     });
 
-    // --- 画像読み込みと濃淡抽出機能 ---
+    // --- 画像読み込み ---
     imageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -277,10 +271,9 @@
       }
     });
 
-    // ★変更：指定階調を「赤ベース」で抽出するロジック
-    function applyToneFilter(toneLevel) {
+    // ★修正：エラーの原因だったイベントの競合を解消し、純粋に画像を書き換える関数
+    function setTone(toneLevel) {
       if (!originalImageObj.src) return;
-      if(isNavy) navyBtn.click(); // ネイビー化と競合しないよう解除
 
       if (toneLevel === 'all') {
         refImage.src = originalImageObj.src;
@@ -305,7 +298,7 @@
         const currentLevel = Math.min(4, Math.floor(brightness / 51));
 
         if (currentLevel === targetLevel) {
-          // ★抽出された部分を「赤（Red）」に塗りつぶす
+          // 赤（Red）で塗りつぶす
           data[i] = 255;   // R
           data[i+1] = 0;   // G
           data[i+2] = 0;   // B
@@ -319,14 +312,44 @@
       refImage.src = canvas.toDataURL();
     }
 
+    // ★修正：レベルボタンを押したときの処理
     toneBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
+        // 白黒化がONなら、安全に状態だけを解除する（バグの原因だったclick()を排除）
+        if (isNavy) {
+          isNavy = false;
+          refImage.style.filter = 'none';
+          navyBtn.textContent = '🔵 白黒化';
+          navyBtn.classList.remove('active-filter-btn');
+        }
+
         toneBtns.forEach(b => b.classList.remove('active-tone'));
         e.target.classList.add('active-tone');
-        applyToneFilter(e.target.dataset.tone);
+        
+        // 赤色抽出を実行
+        setTone(e.target.dataset.tone);
       });
     });
 
+    // ★修正：白黒化ボタンを押したときの処理
+    navyBtn.addEventListener('click', () => {
+      isNavy = !isNavy;
+      if (isNavy) { 
+        // 白黒化する時は、レベル抽出を「全」にリセットする
+        setTone('all');
+        toneBtns.forEach(b => b.classList.remove('active-tone'));
+        document.querySelector('[data-tone="all"]').classList.add('active-tone');
+
+        refImage.style.filter = 'url(#navy-tint)'; 
+        navyBtn.textContent = '🎨 カラー'; 
+        navyBtn.classList.add('active-filter-btn'); 
+      } 
+      else { 
+        refImage.style.filter = 'none'; 
+        navyBtn.textContent = '🔵 白黒化'; 
+        navyBtn.classList.remove('active-filter-btn'); 
+      }
+    });
 
     // --- カメラ処理 ---
     async function init() {
@@ -386,13 +409,13 @@
       }
     });
 
-    // --- ★変更：画像操作ロック（トーンボタンはロックしない） ---
+    // --- 画像操作ロック ---
     lockBtn.addEventListener('click', () => {
       isImageLocked = !isImageLocked;
       if (isImageLocked) {
         lockBtn.textContent = '🔒 解除'; lockBtn.classList.add('locked-btn');
         opacitySlider.disabled = true; scaleSlider.disabled = true; rotateBtn.disabled = true; flipBtn.disabled = true; navyBtn.disabled = true;
-        // ※ toneBtns.forEach(b => b.disabled = true); を削除し、ロック中でもトーン切り替え可能にしました
+        // ※トーンボタン(抽出)はロック対象外なので disabled にしません
         refImage.style.cursor = 'default'; workspace.style.cursor = 'grab'; 
       } else {
         lockBtn.textContent = '🔓 ロック'; lockBtn.classList.remove('locked-btn');
@@ -400,23 +423,24 @@
         refImage.style.cursor = 'move'; workspace.style.cursor = 'default';
       }
     });
+
     opacitySlider.addEventListener('input', (e) => { refImage.style.opacity = e.target.value / 100; });
 
     let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1; let isNavy = false;
     function updateImageTransform() { refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`; }
+    
     function resetImageTransform() {
       imgPosX = 0; imgPosY = 0; imgScale = 1; imgRotate = 0; imgFlipX = 1; scaleSlider.value = 1;
-      isNavy = false; refImage.style.filter = 'none'; navyBtn.textContent = '🔵 白黒化'; navyBtn.classList.remove('active-filter-btn');
+      isNavy = false; 
+      refImage.style.filter = 'none'; 
+      navyBtn.textContent = '🔵 白黒化'; 
+      navyBtn.classList.remove('active-filter-btn');
       updateImageTransform();
     }
+    
     scaleSlider.addEventListener('input', (e) => { imgScale = parseFloat(e.target.value); updateImageTransform(); });
     rotateBtn.addEventListener('click', () => { imgRotate -= 90; updateImageTransform(); });
     flipBtn.addEventListener('click', () => { imgFlipX *= -1; updateImageTransform(); });
-    navyBtn.addEventListener('click', () => {
-      isNavy = !isNavy;
-      if (isNavy) { refImage.style.filter = 'url(#navy-tint)'; navyBtn.textContent = '🎨 カラー'; navyBtn.classList.add('active-filter-btn'); } 
-      else { refImage.style.filter = 'none'; navyBtn.textContent = '🔵 白黒化'; navyBtn.classList.remove('active-filter-btn'); }
-    });
 
     // --- ドラッグ・ズーム ---
     let isDraggingImage = false, isDraggingGlobal = false;
