@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 不具合修正版</title>
+  <title>カメラ・ルシダ アプリ - フィルター連携改善版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,7 +37,6 @@
       text-align: center; padding: 0 20px;
     }
     
-    /* フローティングボタン（上部メニュー表示） */
     #show-ui-btn { position: absolute; top: 15px; right: 15px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 10px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
     
     /* 画像ON/OFFボタン（左下） */
@@ -54,7 +53,7 @@
       position: absolute; bottom: 20px; right: 10px; z-index: 100; 
       background-color: rgba(0, 0, 0, 0.6); border: 1px solid #777;
       padding: 6px 8px; border-radius: 8px;
-      display: none; /* 初期は非表示 */
+      display: none; 
       gap: 4px; align-items: center;
     }
     .tone-btn {
@@ -66,7 +65,7 @@
       outline: 2px solid #ff4d4d; outline-offset: 1px; z-index: 2; border-color: #fff !important;
     }
     
-    /* 上部操作パネル（隠せるエリア） */
+    /* 上部操作パネル */
     #controls { padding: 8px; background-color: #222; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #444; z-index: 10; max-height: 50vh; overflow-y: auto; }
     .control-group { display: flex; align-items: center; gap: 5px; background: #444; padding: 4px 8px; border-radius: 5px; flex-wrap: wrap; font-size: 13px; }
     #hide-ui-btn { background-color: #5cb85c; color: white; font-weight: bold; }
@@ -90,7 +89,6 @@
 </head>
 <body>
 
-  <!-- パスワード入力画面 -->
   <div id="password-screen">
     <h2>カメラルシダ</h2>
     <p>製品版パスワード、または<br>お試し用パスワードを入力してください</p>
@@ -107,7 +105,6 @@
 
   <button id="show-ui-btn">⚙️ メニューを表示</button>
   
-  <!-- 常時表示エリア（画面最下部） -->
   <button id="toggle-image-btn">👁️ 隠す</button> 
   
   <div id="tone-controls">
@@ -120,7 +117,6 @@
     <button class="tone-btn" data-tone="4" style="background:#fff; color:#000;" title="一番明るい光">5</button>
   </div>
 
-  <!-- 上部の隠せる操作メニュー -->
   <div id="controls">
     <div class="control-group">
       <button id="custom-image-btn">🖼️ 画像</button>
@@ -197,7 +193,6 @@
         errorMsg.style.display = 'block';
       }
     });
-
     passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginBtn.click(); });
 
     // --- 要素取得 ---
@@ -228,6 +223,9 @@
 
     let currentStream = null, isImageLocked = false, isFocusLocked = false, isImageHidden = false;
     let originalImageObj = new Image(); 
+    
+    // ★白黒化の状態を記憶するフラグ（最初はカラーなのでfalse）
+    let isNavy = false; 
 
     // --- UIトグル ---
     hideUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'none'; showUiBtn.style.display = 'block'; });
@@ -253,7 +251,6 @@
             refImage.src = originalImageObj.src;
             refImage.style.display = 'block';
             
-            // 下部のボタン群を表示
             toneControls.style.display = 'flex';
             toggleImageBtn.style.display = 'block';
             isImageHidden = false;
@@ -271,7 +268,7 @@
       }
     });
 
-    // ★修正：エラーの原因だったイベントの競合を解消し、純粋に画像を書き換える関数
+    // 抽出部分を描画する関数（純粋にピクセルだけを書き換える）
     function setTone(toneLevel) {
       if (!originalImageObj.src) return;
 
@@ -298,14 +295,12 @@
         const currentLevel = Math.min(4, Math.floor(brightness / 51));
 
         if (currentLevel === targetLevel) {
-          // 赤（Red）で塗りつぶす
-          data[i] = 255;   // R
+          data[i] = 255;   // R (赤色)
           data[i+1] = 0;   // G
           data[i+2] = 0;   // B
           data[i+3] = 255; // Alpha
         } else {
-          // それ以外の階調は透明にする
-          data[i+3] = 0; 
+          data[i+3] = 0;   // それ以外は透明
         }
       }
       ctx.putImageData(imgData, 0, 0);
@@ -315,40 +310,47 @@
     // ★修正：レベルボタンを押したときの処理
     toneBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
-        // 白黒化がONなら、安全に状態だけを解除する（バグの原因だったclick()を排除）
-        if (isNavy) {
-          isNavy = false;
-          refImage.style.filter = 'none';
-          navyBtn.textContent = '🔵 白黒化';
-          navyBtn.classList.remove('active-filter-btn');
-        }
-
+        // ボタンの見た目変更
         toneBtns.forEach(b => b.classList.remove('active-tone'));
         e.target.classList.add('active-tone');
         
-        // 赤色抽出を実行
-        setTone(e.target.dataset.tone);
+        const toneLevel = e.target.dataset.tone;
+        setTone(toneLevel); // 画像の差し替えを実行
+        
+        // ★フィルター（白黒化）の制御：
+        // 「全」が選ばれた時、isNavy（白黒化モード）がONならフィルターを再適用する。
+        // レベル抽出中（1〜5）は、赤色が見えなくなるのを防ぐためフィルターを外す。
+        if (toneLevel === 'all') {
+          refImage.style.filter = isNavy ? 'url(#navy-tint)' : 'none';
+        } else {
+          refImage.style.filter = 'none'; 
+        }
       });
     });
 
     // ★修正：白黒化ボタンを押したときの処理
     navyBtn.addEventListener('click', () => {
+      // 状態を反転
       isNavy = !isNavy;
+      
+      // 白黒化ボタンの見た目だけを更新
       if (isNavy) { 
-        // 白黒化する時は、レベル抽出を「全」にリセットする
-        setTone('all');
-        toneBtns.forEach(b => b.classList.remove('active-tone'));
-        document.querySelector('[data-tone="all"]').classList.add('active-tone');
-
-        refImage.style.filter = 'url(#navy-tint)'; 
         navyBtn.textContent = '🎨 カラー'; 
         navyBtn.classList.add('active-filter-btn'); 
-      } 
-      else { 
-        refImage.style.filter = 'none'; 
+      } else { 
         navyBtn.textContent = '🔵 白黒化'; 
         navyBtn.classList.remove('active-filter-btn'); 
       }
+
+      // 現在選ばれているレベル状態を確認
+      const activeToneBtn = document.querySelector('.active-tone');
+      const currentTone = activeToneBtn ? activeToneBtn.dataset.tone : 'all';
+
+      // もし「全」が表示されている時だけ、即座にフィルターのON/OFFを画面に反映する
+      if (currentTone === 'all') {
+        refImage.style.filter = isNavy ? 'url(#navy-tint)' : 'none';
+      }
+      // もし「1〜5（赤色）」が表示されている時は、何もしない（裏でisNavyの状態だけが変わる）
     });
 
     // --- カメラ処理 ---
@@ -415,7 +417,6 @@
       if (isImageLocked) {
         lockBtn.textContent = '🔒 解除'; lockBtn.classList.add('locked-btn');
         opacitySlider.disabled = true; scaleSlider.disabled = true; rotateBtn.disabled = true; flipBtn.disabled = true; navyBtn.disabled = true;
-        // ※トーンボタン(抽出)はロック対象外なので disabled にしません
         refImage.style.cursor = 'default'; workspace.style.cursor = 'grab'; 
       } else {
         lockBtn.textContent = '🔓 ロック'; lockBtn.classList.remove('locked-btn');
@@ -426,7 +427,7 @@
 
     opacitySlider.addEventListener('input', (e) => { refImage.style.opacity = e.target.value / 100; });
 
-    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1; let isNavy = false;
+    let imgPosX = 0, imgPosY = 0, imgScale = 1, imgRotate = 0, imgFlipX = 1;
     function updateImageTransform() { refImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) rotate(${imgRotate}deg) scale(${imgScale * imgFlipX}, ${imgScale})`; }
     
     function resetImageTransform() {
