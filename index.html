@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - フィルター連携改善版</title>
+  <title>カメラ・ルシダ アプリ - 7段階抽出版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -43,22 +43,22 @@
     #toggle-image-btn { 
       position: absolute; bottom: 20px; left: 10px; z-index: 100; 
       background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; 
-      padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; 
+      padding: 10px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; 
       cursor: pointer; display: none; 
     }
     .image-hidden-state { background-color: #5cb85c !important; border-color: #4cae4c !important; }
     
-    /* 濃淡パレット（右下・非表示の対象外） */
+    /* ★変更：7段階濃淡パレット（右下） */
     #tone-controls {
       position: absolute; bottom: 20px; right: 10px; z-index: 100; 
       background-color: rgba(0, 0, 0, 0.6); border: 1px solid #777;
-      padding: 6px 8px; border-radius: 8px;
+      padding: 5px 6px; border-radius: 8px; /* スマホで収まるようにパディングを調整 */
       display: none; 
-      gap: 4px; align-items: center;
+      gap: 3px; align-items: center; /* ボタン間の隙間を詰める */
     }
     .tone-btn {
-      width: 26px; height: 26px; padding: 0 !important; border-radius: 4px;
-      font-weight: bold; font-size: 12px; display: flex; justify-content: center; align-items: center;
+      width: 22px; height: 26px; padding: 0 !important; border-radius: 4px; /* ボタン幅を縮小 */
+      font-weight: bold; font-size: 11px; display: flex; justify-content: center; align-items: center;
       border: 1px solid #555 !important; cursor: pointer;
     }
     .active-tone {
@@ -107,14 +107,17 @@
   
   <button id="toggle-image-btn">👁️ 隠す</button> 
   
+  <!-- ★変更：7段階になったパレット -->
   <div id="tone-controls">
-    <span style="font-size:11px; color:#ddd; margin-right:2px;">抽出:</span>
-    <button class="tone-btn active-tone" data-tone="all" style="background:#eee; color:#333; width:30px;">全</button>
-    <button class="tone-btn" data-tone="0" style="background:#000; color:#fff;" title="一番暗い影">1</button>
-    <button class="tone-btn" data-tone="1" style="background:#404040; color:#fff;">2</button>
-    <button class="tone-btn" data-tone="2" style="background:#808080; color:#fff;">3</button>
-    <button class="tone-btn" data-tone="3" style="background:#c0c0c0; color:#000;">4</button>
-    <button class="tone-btn" data-tone="4" style="background:#fff; color:#000;" title="一番明るい光">5</button>
+    <span style="font-size:10px; color:#ddd; margin-right:1px;">抽出:</span>
+    <button class="tone-btn active-tone" data-tone="all" style="background:#eee; color:#333; width:26px;">全</button>
+    <button class="tone-btn" data-tone="0" style="background:#000000; color:#fff;" title="一番暗い影">1</button>
+    <button class="tone-btn" data-tone="1" style="background:#2a2a2a; color:#fff;">2</button>
+    <button class="tone-btn" data-tone="2" style="background:#555555; color:#fff;">3</button>
+    <button class="tone-btn" data-tone="3" style="background:#808080; color:#fff;">4</button>
+    <button class="tone-btn" data-tone="4" style="background:#aaaaaa; color:#000;">5</button>
+    <button class="tone-btn" data-tone="5" style="background:#d4d4d4; color:#000;">6</button>
+    <button class="tone-btn" data-tone="6" style="background:#ffffff; color:#000;" title="一番明るい光">7</button>
   </div>
 
   <div id="controls">
@@ -223,8 +226,6 @@
 
     let currentStream = null, isImageLocked = false, isFocusLocked = false, isImageHidden = false;
     let originalImageObj = new Image(); 
-    
-    // ★白黒化の状態を記憶するフラグ（最初はカラーなのでfalse）
     let isNavy = false; 
 
     // --- UIトグル ---
@@ -268,7 +269,7 @@
       }
     });
 
-    // 抽出部分を描画する関数（純粋にピクセルだけを書き換える）
+    // ★変更：7段階で画像を分割・抽出するロジック
     function setTone(toneLevel) {
       if (!originalImageObj.src) return;
 
@@ -291,35 +292,35 @@
         const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
         if (a === 0) continue;
 
+        // 明るさを計算 (0 〜 255)
         const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-        const currentLevel = Math.min(4, Math.floor(brightness / 51));
+        
+        // ★ 7段階 (0 〜 6) に振り分ける
+        const currentLevel = Math.min(6, Math.floor((brightness / 256) * 7));
 
         if (currentLevel === targetLevel) {
-          data[i] = 255;   // R (赤色)
+          // 指定階調なら赤で塗りつぶす
+          data[i] = 255;   // R
           data[i+1] = 0;   // G
           data[i+2] = 0;   // B
           data[i+3] = 255; // Alpha
         } else {
-          data[i+3] = 0;   // それ以外は透明
+          // それ以外は透明
+          data[i+3] = 0; 
         }
       }
       ctx.putImageData(imgData, 0, 0);
       refImage.src = canvas.toDataURL();
     }
 
-    // ★修正：レベルボタンを押したときの処理
     toneBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
-        // ボタンの見た目変更
         toneBtns.forEach(b => b.classList.remove('active-tone'));
         e.target.classList.add('active-tone');
         
         const toneLevel = e.target.dataset.tone;
-        setTone(toneLevel); // 画像の差し替えを実行
+        setTone(toneLevel); 
         
-        // ★フィルター（白黒化）の制御：
-        // 「全」が選ばれた時、isNavy（白黒化モード）がONならフィルターを再適用する。
-        // レベル抽出中（1〜5）は、赤色が見えなくなるのを防ぐためフィルターを外す。
         if (toneLevel === 'all') {
           refImage.style.filter = isNavy ? 'url(#navy-tint)' : 'none';
         } else {
@@ -328,12 +329,9 @@
       });
     });
 
-    // ★修正：白黒化ボタンを押したときの処理
     navyBtn.addEventListener('click', () => {
-      // 状態を反転
       isNavy = !isNavy;
       
-      // 白黒化ボタンの見た目だけを更新
       if (isNavy) { 
         navyBtn.textContent = '🎨 カラー'; 
         navyBtn.classList.add('active-filter-btn'); 
@@ -342,15 +340,12 @@
         navyBtn.classList.remove('active-filter-btn'); 
       }
 
-      // 現在選ばれているレベル状態を確認
       const activeToneBtn = document.querySelector('.active-tone');
       const currentTone = activeToneBtn ? activeToneBtn.dataset.tone : 'all';
 
-      // もし「全」が表示されている時だけ、即座にフィルターのON/OFFを画面に反映する
       if (currentTone === 'all') {
         refImage.style.filter = isNavy ? 'url(#navy-tint)' : 'none';
       }
-      // もし「1〜5（赤色）」が表示されている時は、何もしない（裏でisNavyの状態だけが変わる）
     });
 
     // --- カメラ処理 ---
