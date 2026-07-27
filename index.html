@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カメラ・ルシダ アプリ - 2点アンカー高精度版</title>
+  <title>カメラ・ルシダ アプリ - 究極のワークフロー版</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,6 +29,14 @@
     
     #show-ui-btn { position: absolute; top: 15px; right: 15px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 10px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
     
+    /* ★追加：全画面表示時のフローティング・ロックボタン（左上） */
+    #floating-lock-btn {
+      position: absolute; top: 15px; left: 15px; z-index: 100; 
+      background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; 
+      padding: 10px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; 
+    }
+    #floating-lock-btn.locked-btn { background-color: #d9534f !important; color: white !important; border-color: #d43f3a !important;}
+    
     #toggle-image-btn { position: absolute; bottom: 20px; left: 10px; z-index: 100; background-color: rgba(0, 0, 0, 0.6); color: white; border: 1px solid #777; padding: 10px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; }
     .image-hidden-state { background-color: #5cb85c !important; border-color: #4cae4c !important; }
     
@@ -53,27 +61,21 @@
     video { max-width: 100%; max-height: 100%; z-index: 1; }
     
     #image-wrapper { position: absolute; z-index: 2; opacity: 0.5; display: none; cursor: move; transform-origin: center center; }
-    #reference-image { display: block; max-width: 100vw; max-height: 100vh; pointer-events: none; user-select: none; }
+    /* ★変更：画像を直接透明にするための設定準備 */
+    #reference-image { display: block; max-width: 100vw; max-height: 100vh; pointer-events: none; user-select: none; transition: opacity 0.2s ease; }
     
-    /* ★変更：ターゲットのセンター合わせ・細線化 */
     .anchor-point {
       position: absolute; width: 40px; height: 40px; margin-left: -20px; margin-top: -20px;
       pointer-events: auto; cursor: move; display: none; z-index: 10; transform-origin: center center;
       filter: drop-shadow(0px 0px 2px rgba(255,255,255,0.9));
     }
     .anchor-point::before, .anchor-point::after { content: ''; position: absolute; background: #ff4d4d; }
-    
-    /* 縦線（太さ1px、ど真ん中配置） */
     .anchor-point::before { left: 50%; top: 0; width: 1px; height: 100%; transform: translateX(-50%); }
-    /* 横線（太さ1px、ど真ん中配置） */
     .anchor-point::after { left: 0; top: 50%; width: 100%; height: 1px; transform: translateY(-50%); }
-    
-    /* サークル（線の太さ1px、ど真ん中配置） */
     .anchor-circle { 
       position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
       width: 18px; height: 18px; border: 1px solid #ff4d4d; border-radius: 50%; box-sizing: border-box; 
     }
-    
     .anchor-point span {
       position: absolute; top: -16px; left: 20px; color: #ff4d4d; font-weight: bold; font-size: 13px;
       text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
@@ -107,7 +109,10 @@
     </filter>
   </svg>
 
+  <!-- 全画面時の上部ボタン群 -->
+  <button id="floating-lock-btn">🔓 ロック</button>
   <button id="show-ui-btn">⚙️ メニューを表示</button>
+  
   <button id="toggle-image-btn">👁️ 隠す</button> 
   
   <div id="tone-controls">
@@ -208,6 +213,7 @@
     const flipBtn = document.getElementById('flip-btn');
     const navyBtn = document.getElementById('navy-btn');
     const lockBtn = document.getElementById('lock-btn');
+    const floatingLockBtn = document.getElementById('floating-lock-btn'); // ★追加
     const focusLockBtn = document.getElementById('focus-lock-btn');
     
     const hideUiBtn = document.getElementById('hide-ui-btn');
@@ -226,18 +232,36 @@
     let originalImageObj = new Image(); 
     let isNavy = false; 
 
-    // --- UIトグル ---
-    hideUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'none'; showUiBtn.style.display = 'block'; });
-    showUiBtn.addEventListener('click', () => { controlsDiv.style.display = 'flex'; showUiBtn.style.display = 'none'; });
+    // --- ★変更：UIトグル（フローティングロックボタンの表示/非表示を連動） ---
+    hideUiBtn.addEventListener('click', () => { 
+      controlsDiv.style.display = 'none'; 
+      showUiBtn.style.display = 'block'; 
+      // 画像が読み込まれていれば左上のロックボタンを表示する
+      if(originalImageObj.src) floatingLockBtn.style.display = 'block'; 
+    });
+    
+    showUiBtn.addEventListener('click', () => { 
+      controlsDiv.style.display = 'flex'; 
+      showUiBtn.style.display = 'none'; 
+      floatingLockBtn.style.display = 'none'; 
+    });
+    
     cameraSettingsBtn.addEventListener('click', () => {
       if (cameraPanel.style.display === 'none') { cameraPanel.style.display = 'flex'; cameraSettingsBtn.classList.add('active-filter-btn'); } 
       else { cameraPanel.style.display = 'none'; cameraSettingsBtn.classList.remove('active-filter-btn'); }
     });
     customImageBtn.addEventListener('click', () => { imageInput.click(); });
+    
+    // --- ★変更：画像を隠すボタン（アンカーは残すため、refImageのopacityを操作） ---
     toggleImageBtn.addEventListener('click', () => {
       isImageHidden = !isImageHidden;
-      if (isImageHidden) { imageWrapper.style.display = 'none'; toggleImageBtn.textContent = '🖼️ 表示'; toggleImageBtn.classList.add('image-hidden-state'); } 
-      else { imageWrapper.style.display = 'block'; toggleImageBtn.textContent = '👁️ 隠す'; toggleImageBtn.classList.remove('image-hidden-state'); }
+      if (isImageHidden) { 
+        refImage.style.opacity = '0'; // 画像だけを完全透明にする
+        toggleImageBtn.textContent = '🖼️ 表示'; toggleImageBtn.classList.add('image-hidden-state'); 
+      } else { 
+        refImage.style.opacity = '1'; 
+        toggleImageBtn.textContent = '👁️ 隠す'; toggleImageBtn.classList.remove('image-hidden-state'); 
+      }
     });
 
     anchorBtn.addEventListener('click', () => {
@@ -263,7 +287,8 @@
             
             toneControls.style.display = 'flex';
             toggleImageBtn.style.display = 'block';
-            isImageHidden = false; toggleImageBtn.textContent = '👁️ 隠す'; toggleImageBtn.classList.remove('image-hidden-state');
+            isImageHidden = false; refImage.style.opacity = '1'; 
+            toggleImageBtn.textContent = '👁️ 隠す'; toggleImageBtn.classList.remove('image-hidden-state');
             
             toneBtns.forEach(b => b.classList.remove('active-tone'));
             document.querySelector('[data-tone="all"]').classList.add('active-tone');
@@ -271,6 +296,11 @@
             anchor1.style.left = '30%'; anchor1.style.top = '50%';
             anchor2.style.left = '70%'; anchor2.style.top = '50%';
             resetImageTransform();
+            
+            // もし全画面表示中なら、画像ロード完了とともにフローティングロックボタンを表示
+            if (controlsDiv.style.display === 'none') {
+              floatingLockBtn.style.display = 'block';
+            }
           };
           originalImageObj.src = event.target.result;
         };
@@ -351,19 +381,29 @@
       }
     });
 
-    // --- 画像操作ロック ---
-    lockBtn.addEventListener('click', () => {
+    // --- ★追加：画像操作ロックの共通関数 ---
+    function toggleLockState() {
       isImageLocked = !isImageLocked;
       if (isImageLocked) {
+        // パネル内のボタン
         lockBtn.textContent = '🔒 解除'; lockBtn.classList.add('locked-btn');
+        // フローティングボタン
+        floatingLockBtn.textContent = '🔒 解除'; floatingLockBtn.classList.add('locked-btn');
+        
         opacitySlider.disabled = true; scaleSlider.disabled = true; rotateBtn.disabled = true; flipBtn.disabled = true; navyBtn.disabled = true;
         imageWrapper.style.cursor = 'default'; workspace.style.cursor = 'grab'; 
       } else {
         lockBtn.textContent = '🔓 ロック'; lockBtn.classList.remove('locked-btn');
+        floatingLockBtn.textContent = '🔓 ロック'; floatingLockBtn.classList.remove('locked-btn');
+        
         opacitySlider.disabled = false; scaleSlider.disabled = false; rotateBtn.disabled = false; flipBtn.disabled = false; navyBtn.disabled = false;
         imageWrapper.style.cursor = 'move'; workspace.style.cursor = 'default';
       }
-    });
+    }
+    
+    // 両方のボタンに同じ関数を割り当て
+    lockBtn.addEventListener('click', toggleLockState);
+    floatingLockBtn.addEventListener('click', toggleLockState);
 
     opacitySlider.addEventListener('input', (e) => { imageWrapper.style.opacity = e.target.value / 100; });
 
